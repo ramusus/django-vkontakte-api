@@ -44,8 +44,8 @@ class VkontakteManager(models.Manager):
         '''
         try:
             assert self.model.slug_prefix and slug.startswith(self.model.slug_prefix)
-            remote_id = int(slug.replace(self.model.slug_prefix, ''))
-        except (AssertionError, ValueError):
+            remote_id = int(re.findall(r'^%s(\d+)$' % self.model.slug_prefix, slug)[0])
+        except (AssertionError, ValueError, IndexError):
             try:
                 return self.model.objects.get(screen_name=slug)
             except self.model.DoesNotExist:
