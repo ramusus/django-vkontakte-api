@@ -76,7 +76,9 @@ class VkontakteParser(object):
         elif len(date_words) == 4:
             # 15 мая в 10:12
             h, m = self.parse_time(date_words[-1])
-            return datetime(now.year, months.index(date_words[1]), int(date_words[0]), h, m)
+            value = datetime(now.year, months.index(date_words[1]), int(date_words[0]), h, m)
+            return value if value < now else datetime(now.year-1, months.index(date_words[1]), int(date_words[0]), h, m)
+
         elif len(date_words) == 3:
             # 31 дек 2011
             return datetime(int(date_words[2]), months.index(date_words[1]), int(date_words[0]))
