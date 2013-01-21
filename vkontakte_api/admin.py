@@ -4,6 +4,17 @@ from django.contrib import admin
 admin.ModelAdmin.save_on_top = True
 admin.ModelAdmin.list_per_page = 50
 
+class GenericRelationListFilter(admin.SimpleListFilter):
+    separator = '-'
+
+    def lookups(self, request, model_admin):
+        return [('%s%s%s' % (getattr(post, self.ct_field_name).id, self.separator, getattr(post, self.id_field_name)), post.wall_owner.name) for post in model_admin.model.objects.order_by().distinct('wall_owner_content_type','wall_owner_id')]
+
+    def queryset(self, request, queryset):
+        if self.value() and self.separator in self.value():
+            content_type, id = self.value().split(self.separator)
+            return queryset.filter(**{self.ct_field_name: content_type, self.id_field_name: id})
+
 class VkontakteModelAdmin(admin.ModelAdmin):
 
     def vk_link(self, obj):
