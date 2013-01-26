@@ -47,6 +47,10 @@ def api_call(method, **kwargs):
             update_token()
             vk = get_api()
             response = vk.get(method, timeout=TIMEOUT, **kwargs)
+        elif e.code == 6:
+            log.warning("Vkontakte error: '%s'" % (e.description))
+            time.sleep(10)
+            response = api_call(method, **kwargs)
         elif e.code == 9:
             log.warning("Vkontakte flood control registered while executing method %s with params %s" % (method, kwargs))
             time.sleep(1)
