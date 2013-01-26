@@ -8,7 +8,7 @@ class GenericRelationListFilter(admin.SimpleListFilter):
     separator = '-'
 
     def lookups(self, request, model_admin):
-        return [('%s%s%s' % (getattr(post, self.ct_field_name).id, self.separator, getattr(post, self.id_field_name)), post.wall_owner.name) for post in model_admin.model.objects.order_by().distinct('wall_owner_content_type','wall_owner_id')]
+        return [('%s%s%s' % (getattr(instance, self.ct_field_name).id, self.separator, getattr(instance, self.id_field_name)), getattr(instance, self.field_name)) for instance in model_admin.model.objects.order_by().distinct(self.ct_field_name,self.id_field_name)]
 
     def queryset(self, request, queryset):
         if self.value() and self.separator in self.value():
