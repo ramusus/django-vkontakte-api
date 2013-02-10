@@ -8,6 +8,7 @@ import logging
 log = logging.getLogger('vkontakte_api')
 
 TIMEOUT = getattr(settings, 'VKONTAKTE_ADS_REQUEST_TIMEOUT', 1)
+ACCESS_TOKEN = getattr(settings, 'VKONTAKTE_API_ACCESS_TOKEN', None)
 
 VkontakteError = vkontakte.VKError
 
@@ -27,12 +28,15 @@ def get_api():
     '''
     Return API instance with latest token from database
     '''
-    tokens = get_tokens()
-    if not tokens:
-        update_token()
+    if ACCESS_TOKEN:
+        token = ACCESS_TOKEN
+    else:
         tokens = get_tokens()
-    t = tokens[0]
-    return vkontakte.API(token=t.access_token)
+        if not tokens:
+            update_token()
+            tokens = get_tokens()
+        token = tokens[0].access_token
+    return vkontakte.API(token=token)
 
 def api_call(method, **kwargs):
     '''

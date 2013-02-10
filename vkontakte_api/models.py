@@ -109,6 +109,10 @@ class VkontakteManager(models.Manager):
         if isinstance(response_list, dict):
             response_list = [response_list]
 
+        return self.parse_response_list(response_list)
+
+    def parse_response_list(self, response_list):
+
         instances = []
         for resource in response_list:
 
@@ -137,9 +141,12 @@ class VkontakteManager(models.Manager):
         '''
         Retrieve and save object to local DB
         '''
+        extra_fields = kwargs.pop('extra_fields', {})
+        extra_fields['fetched'] = datetime.now()
+
         instances = []
         for instance in self.get(**kwargs):
-            instance.fetched = datetime.now()
+            instance.__dict__.update(extra_fields)
             instances += [self.get_or_create_from_instance(instance)]
 
         return instances
