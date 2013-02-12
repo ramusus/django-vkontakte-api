@@ -27,21 +27,21 @@ def fetch_all(func, return_all, kwargs_offset='offset'):
     def fetch_something(self, ..., *kwargs):
         ....
     """
-    def wrapper(self, all=False, **kwargs):
+    def wrapper(self, all=False, *args, **kwargs):
         if all:
-            instances = func(self, **kwargs)
+            instances = func(self, *args, **kwargs)
             instances_count = len(instances)
 
             if instances_count != 0:
                 # TODO: make protection somehow from endless loop in case
                 # where `kwargs_offset` argument is not make any sense for `func`
                 kwargs[kwargs_offset] = kwargs.get(kwargs_offset, 0) + instances_count
-                return wrapper(self, all=True, **kwargs)
+                return wrapper(self, all=True, *args, **kwargs)
             else:
                 # do something
                 pass
-            return return_all(kwargs)
+            return return_all(*args, **kwargs)
         else:
-            return func(self, **kwargs)
+            return func(self, *args, **kwargs)
 
     return wraps(func)(wrapper)

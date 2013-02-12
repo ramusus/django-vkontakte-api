@@ -104,14 +104,14 @@ class VkontakteManager(models.Manager):
         '''
         Retrieve objects from remote server
         '''
+        extra_fields = kwargs.pop('extra_fields', {})
+        extra_fields['fetched'] = datetime.now()
+
         response_list = self.api_call(*args, **kwargs)
 
-        if isinstance(response_list, dict):
-            response_list = [response_list]
+        return self.parse_response_list(response_list, extra_fields)
 
-        return self.parse_response_list(response_list)
-
-    def parse_response_list(self, response_list):
+    def parse_response_list(self, response_list, extra_fields=None):
 
         instances = []
         for resource in response_list:
@@ -132,6 +132,9 @@ class VkontakteManager(models.Manager):
                 raise e
 
             instance = self.model()
+            # important to do it before calling parse method
+            if extra_fields:
+                instance.__dict__.update(extra_fields)
             instance.parse(resource)
             instances += [instance]
 
@@ -141,14 +144,9 @@ class VkontakteManager(models.Manager):
         '''
         Retrieve and save object to local DB
         '''
-        extra_fields = kwargs.pop('extra_fields', {})
-        extra_fields['fetched'] = datetime.now()
-
         instances = []
         for instance in self.get(**kwargs):
-            instance.__dict__.update(extra_fields)
             instances += [self.get_or_create_from_instance(instance)]
-
         return instances
 
 class VkontakteModel(models.Model):
