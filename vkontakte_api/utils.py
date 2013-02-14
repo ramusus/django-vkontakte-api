@@ -5,6 +5,8 @@ import vkontakte
 import time
 import logging
 
+__all__ = ['api_call']
+
 log = logging.getLogger('vkontakte_api')
 
 TIMEOUT = getattr(settings, 'VKONTAKTE_ADS_REQUEST_TIMEOUT', 1)
