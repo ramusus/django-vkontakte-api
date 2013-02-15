@@ -1,5 +1,7 @@
 # Django Vkontakte API
 
+<a href="https://travis-ci.org/#!/ramusus/django-vkontakte-api" title="Django Vkontakte API Travis Status"><img src="https://secure.travis-ci.org/ramusus/django-vkontakte-api.png?branch=master"></a>
+
 Приложение позволяет взаимодействовать с объектами Вконтакте API используя стандартные модели Django
 
 ## Установка

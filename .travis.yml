@@ -1,0 +1,17 @@
+language: python
+python:
+  - "2.7"
+env:
+  - DJANGO=1.4
+install:
+  - pip install -qr requirements.txt --use-mirrors
+  - pip install -q Django==$DJANGO --use-mirrors
+  - pip install -q . --use-mirrors
+script:
+  - python quicktest.py vkontakte_api
+notifications:
+  email:
+    recipients:
+      - ramusus@gmail.com
+    on_success: change
+    on_failure: change
