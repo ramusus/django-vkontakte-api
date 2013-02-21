@@ -1,6 +1,6 @@
 # Django Vkontakte API
 
-<a href="https://travis-ci.org/#!/ramusus/django-vkontakte-api" title="Django Vkontakte API Travis Status"><img src="https://secure.travis-ci.org/ramusus/django-vkontakte-api.png"></a>
+[![Build Status](https://travis-ci.org/ramusus/django-vkontakte-api.png?branch=master)](https://travis-ci.org/ramusus/django-vkontakte-api)
 
 Приложение позволяет взаимодействовать с объектами Вконтакте API используя стандартные модели Django
 
@@ -12,8 +12,18 @@
 
     INSTALLED_APPS = (
         ...
+        'oauth_tokens',
         'vkontakte_api',
     )
+
+    # настройки oauth-tokens
+    OAUTH_TOKENS_HISTORY = True                                         # хранить старые токены в БД
+    OAUTH_TOKENS_VKONTAKTE_CLIENT_ID = ''                               # ID приложения Вконтакте
+    OAUTH_TOKENS_VKONTAKTE_CLIENT_SECRET = ''                           # secret key приложения Вконтакте
+    OAUTH_TOKENS_VKONTAKTE_SCOPE = ['ads,wall,photos,friends,stats']    # права доступа приложения Вконтакте
+    OAUTH_TOKENS_VKONTAKTE_USERNAME = ''                                # логин пользователя Вконтакте
+    OAUTH_TOKENS_VKONTAKTE_PASSWORD = ''                                # пароль пользователя Вконтакте
+    OAUTH_TOKENS_VKONTAKTE_PHONE_END = ''                               # последние 4 цифры телефона пользователя Вконтакте
 
 ## Примеры использования
 
