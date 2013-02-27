@@ -15,9 +15,16 @@ class VkontakteParser(object):
 
     @property
     def html(self):
-        start = self.content.find('<div')
-        stop = self.content.find('<!>', start)
-        return self.content[start:stop]
+        content = self.content
+        # fix parsing html for audio tags in http://vk.com/wall-16297716_87985, http://vk.com/wall-16297716_182282?reply=182342
+        content = content.replace('<!-- ->->','').replace('<!-- -->','')
+
+        start = content.find('<div')
+        if '<!>' in content:
+            stop = content.find('<!>', start)
+        else:
+            stop = len(content)
+        return content[start:stop]
 
     @property
     def content_bs(self):
@@ -36,8 +43,6 @@ class VkontakteParser(object):
             response = requests.post(*args, **kwargs)
 
         self.content = response.content.decode('windows-1251')
-        # fix parsing html for audio tags in http://vk.com/post-16297716_87985
-        self.content = self.content.replace('<!-- ->->','')
         return self
 
     def parse_time(self, text):
@@ -73,15 +78,17 @@ class VkontakteParser(object):
                 return now - timedelta(minutes=value)
         elif u'только что' == date_text:
             return now
-        elif len(date_words) == 4:
-            # 15 мая в 10:12
-            h, m = self.parse_time(date_words[-1])
-            value = datetime(now.year, months.index(date_words[1]), int(date_words[0]), h, m)
-            return value if value < now else datetime(now.year-1, months.index(date_words[1]), int(date_words[0]), h, m)
+        elif len(date_words) > 1:
+            month = date_words[1][:3]
+            if len(date_words) == 4:
+                # 15 мая в 10:12
+                h, m = self.parse_time(date_words[-1])
+                value = datetime(now.year, months.index(month), int(date_words[0]), h, m)
+                return value if value < now else datetime(now.year-1, months.index(month), int(date_words[0]), h, m)
 
-        elif len(date_words) == 3:
-            # 31 дек 2011
-            return datetime(int(date_words[2]), months.index(date_words[1]), int(date_words[0]))
+            elif len(date_words) == 3:
+                # 31 дек 2011
+                return datetime(int(date_words[2]), months.index(month), int(date_words[0]))
 
     def parse_container_likes(self, container, classname):
         try:
