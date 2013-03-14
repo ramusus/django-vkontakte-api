@@ -161,7 +161,7 @@ class VkontakteModel(models.Model):
 
     def _substitute(self, old_instance):
         '''
-        Substitute new user with old one while updating in method Manager.get_or_create_from_instance()
+        Substitute new instance with old one while updating in method Manager.get_or_create_from_instance()
         Can be overrided in child models
         '''
         self.id = old_instance.id

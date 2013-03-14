@@ -20,10 +20,15 @@ def opt_arguments(func):
 @opt_arguments
 def fetch_all(func, return_all, kwargs_offset='offset'):
     """
-    Decorator for class method fetching all items. Added parameter all=False for decored method.
-    If all is True, method runs as many times as it returns any results. Usage:
+    Class method decorator for fetching all items. Add parameter `all=False` for decored method.
+    If `all` is True, method runs as many times as it returns any results.
+    Decorator receive 2 parameters:
+      * callback method `return_all`. It's called with the same parameters
+        as decored method after all itmes are fetched.
+      * `kwargs_offset` - name of offset parameter among kwargs
+    Usage:
 
-    @fetch_all
+    @fetch_all(return_all=lambda instance,*a,**k: instance.items.all())
     def fetch_something(self, ..., *kwargs):
         ....
     """
