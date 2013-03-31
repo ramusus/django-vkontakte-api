@@ -30,7 +30,7 @@ class VkontakteManager(models.Manager):
 
     def get_by_url(self, url):
         '''
-        Return vkonakte group by group url
+        Return vkonakte object by url
         '''
         m = re.findall(r'(?:http://)?vk.com/(.+)/?', url)
         if not len(m):
@@ -40,7 +40,7 @@ class VkontakteManager(models.Manager):
 
     def get_by_slug(self, slug):
         '''
-        Return User of Group by slug
+        Return User, Group, Application by slug
         '''
         try:
             assert self.model.slug_prefix and slug.startswith(self.model.slug_prefix)

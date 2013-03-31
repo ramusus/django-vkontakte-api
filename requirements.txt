@@ -1,5 +1,0 @@
-django
-django-annoying
-django-picklefield
-django-oauth-tokens
-vkontakte

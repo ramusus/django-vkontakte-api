@@ -4,9 +4,8 @@ python:
 env:
   - DJANGO=1.4
 install:
-  - pip install -qr requirements.txt --use-mirrors
-  - pip install -q Django>=$DJANGO --use-mirrors
-  - pip install -q . --use-mirrors
+  - pip install Django>=$DJANGO --use-mirrors
+  - pip install . --use-mirrors
 script:
   - python quicktest.py vkontakte_api
 notifications:

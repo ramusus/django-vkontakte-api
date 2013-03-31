@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from datetime import datetime, timedelta
 from BeautifulSoup import BeautifulSoup
+import simplejson as json
 import requests
 
 class VkontakteParseError(Exception):
@@ -19,12 +20,21 @@ class VkontakteParser(object):
         # fix parsing html for audio tags in http://vk.com/wall-16297716_87985, http://vk.com/wall-16297716_182282?reply=182342
         content = content.replace('<!-- ->->','').replace('<!-- -->','')
 
-        start = content.find('<div')
-        if '<!>' in content:
-            stop = content.find('<!>', start)
-        else:
-            stop = len(content)
-        return content[start:stop]
+        parts = content.split('<!>')
+
+        for part in parts[5:]:
+            if part[:4] == '<div':
+                content = part
+                break
+
+        # concatenate preload container
+        for part in parts[6:]:
+            if part[:7] == '<!json>' and 'preload' in part:
+                data = json.loads(part.replace('<!json>', ''))
+                content += data['preload'][0]
+                break
+
+        return content
 
     @property
     def content_bs(self):

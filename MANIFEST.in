@@ -1,7 +1,6 @@
 include README.md
 include LICENSE
 include MANIFEST.in
-include requirements.txt
 include quicktest.py
 include settings_test.py
 recursive-include vkontakte_api *
