@@ -51,6 +51,7 @@ def api_call(method, **kwargs):
         if e.code == 5:
             log.debug("Updating vkontakte access token")
             update_token()
+            ACCESS_TOKEN = None
             vk = get_api()
             response = vk.get(method, timeout=TIMEOUT, **kwargs)
         elif e.code == 6:

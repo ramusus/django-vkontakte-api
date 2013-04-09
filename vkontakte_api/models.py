@@ -107,9 +107,26 @@ class VkontakteManager(models.Manager):
         extra_fields = kwargs.pop('extra_fields', {})
         extra_fields['fetched'] = datetime.now()
 
-        response_list = self.api_call(*args, **kwargs)
+        response = self.api_call(*args, **kwargs)
 
-        return self.parse_response_list(response_list, extra_fields)
+        return self.parse_response(response, extra_fields)
+
+    def parse_response(self, response, extra_fields=None):
+        if isinstance(response, (list, tuple)):
+            return self.parse_response_list(response, extra_fields)
+        elif isinstance(response, dict):
+            return self.parse_response_dict(response, extra_fields)
+        else:
+            raise VkontakteContentError('Vkontakte response should be list or dict, not %s' % response)
+
+    def parse_response_dict(self, resource, extra_fields=None):
+
+        instance = self.model()
+        if extra_fields:
+            instance.__dict__.update(extra_fields)
+        instance.parse(resource)
+
+        return instance
 
     def parse_response_list(self, response_list, extra_fields=None):
 
@@ -128,7 +145,7 @@ class VkontakteManager(models.Manager):
             try:
                 resource = dict(resource)
             except (TypeError, ValueError), e:
-                log.error("Impossible to handle response of api call %s with parameters: %s" % (self.methods['get'], kwargs))
+                log.error("Resource %s is not dictionary" % resource)
                 raise e
 
             instance = self.model()
@@ -144,10 +161,11 @@ class VkontakteManager(models.Manager):
         '''
         Retrieve and save object to local DB
         '''
-        instances = []
-        for instance in self.get(**kwargs):
-            instances += [self.get_or_create_from_instance(instance)]
-        return instances
+        result = self.get(**kwargs)
+        if isinstance(result, list):
+            return [self.get_or_create_from_instance(instance) for instance in result]
+        else:
+            return self.get_or_create_from_instance(result)
 
 class VkontakteModel(models.Model):
     class Meta:

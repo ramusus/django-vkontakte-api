@@ -1,8 +1,12 @@
 # -*- coding: utf-8 -*-
+from django.conf import settings
 from datetime import datetime, timedelta
 from BeautifulSoup import BeautifulSoup
 import simplejson as json
 import requests
+
+def isalambda(v):
+    return isinstance(v, type(lambda: None)) and v.__name__ == '<lambda>'
 
 class VkontakteParseError(Exception):
     pass
@@ -106,3 +110,26 @@ class VkontakteParser(object):
             return value and int(value) or 0
         except Exception, e:
             raise VkontakteParseError("Error while parsing post likes value: %s" % e)
+
+    def add_users(self, users, user_link, user_photo, user_add):
+        if 'vkontakte_users' not in settings.INSTALLED_APPS:
+            raise ImproperlyConfigured("Application 'vkontakte_users' not in INSTALLED_APPS")
+
+        from vkontakte_users.models import User
+
+        items = self.content_bs.findAll(*users)
+        for item in items:
+            user_link_container = user_link(item) if isalambda(user_link) else item.find(*user_link)
+            user_photo_container = user_photo(item) if isalambda(user_photo) else item.find(*user_photo)
+
+            user = User.remote.get_by_slug(user_link_container['href'][1:])
+            if user:
+                user.set_name(user_link_container.text)
+                user.photo = user_photo_container['src']
+                user.save()
+                if isalambda(user_add):
+                    user_add(user)
+                else:
+                    raise ValueError("Argument 'user_add' should be a lambda function, not %s" % user_add)
+
+        return items
