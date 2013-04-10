@@ -182,7 +182,7 @@ class VkontakteModel(models.Model):
         Substitute new instance with old one while updating in method Manager.get_or_create_from_instance()
         Can be overrided in child models
         '''
-        self.id = old_instance.id
+        self.pk = old_instance.pk
 
     def parse(self, response):
         '''
