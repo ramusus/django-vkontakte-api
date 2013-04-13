@@ -35,7 +35,8 @@ class VkontakteParser(object):
         for part in parts[6:]:
             if part[:7] == '<!json>' and 'preload' in part:
                 data = json.loads(part.replace('<!json>', ''))
-                content += data['preload'][0]
+                if not isinstance(data['preload'], bool):
+                    content += data['preload'][0]
                 break
 
         return content
