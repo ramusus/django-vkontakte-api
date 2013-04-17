@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 from BeautifulSoup import BeautifulSoup
 import simplejson as json
 import requests
+import re
 
 def isalambda(v):
     return isinstance(v, type(lambda: None)) and v.__name__ == '<lambda>'
@@ -22,7 +23,8 @@ class VkontakteParser(object):
     def html(self):
         content = self.content
         # fix parsing html for audio tags in http://vk.com/wall-16297716_87985, http://vk.com/wall-16297716_182282?reply=182342
-        content = content.replace('<!-- ->->','').replace('<!-- -->','')
+        # <!-- ->-> <!-- -<>-> <!-- -->
+        content = re.sub(r'<!--.+?(?:->)?->', '', content)
 
         parts = content.split('<!>')
 
