@@ -70,7 +70,7 @@ def api_call(method, **kwargs):
         time.sleep(1)
         response = api_call(method, **kwargs)
     except Exception, e:
-        log.error("Unhandled error raised: %s" % e)
+        log.error("Unhandled error: %s registered while executing method %s with params %s" % (e, method, kwargs))
         raise e
 
     return response
