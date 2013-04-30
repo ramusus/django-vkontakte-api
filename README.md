@@ -25,6 +25,14 @@
     OAUTH_TOKENS_VKONTAKTE_PASSWORD = ''                                # user password
     OAUTH_TOKENS_VKONTAKTE_PHONE_END = ''                               # last 4 digits of user mobile phone
 
+## Покрытие методов API
+
+* [resolveScreenName](http://vk.com/developers.php?oid=-1&p=resolveScreenName) – определяет тип объекта (пользователь, группа, приложение) и его идентификатор по короткому имени screen_name;
+
+В планах:
+
+* [likes.getList](http://vk.com/developers.php?oid=-1&p=likes.getList) – возвращает список пользователей, которые добавили объект в список «Мне нравится»;
+
 ## Примеры использования
 
 ### Запрос API
