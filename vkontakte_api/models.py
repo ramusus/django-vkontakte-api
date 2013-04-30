@@ -2,7 +2,7 @@
 from django.db import models
 from django.db.models.fields import FieldDoesNotExist
 from datetime import datetime, date
-from vkontakte_api.utils import api_call
+from vkontakte_api.utils import api_call, VkontakteError
 from vkontakte_api import fields
 import logging
 import re
@@ -49,7 +49,11 @@ class VkontakteManager(models.Manager):
             try:
                 return self.model.objects.get(screen_name=slug)
             except self.model.DoesNotExist:
-                response = api_call('resolveScreenName', **{'screen_name': slug})
+                try:
+                    response = api_call('resolveScreenName', **{'screen_name': slug})
+                except VkontakteError:
+                    log.error("Method get_by_slug returned error instead of response. Slug is '%s'" % slug)
+                    return None
                 try:
                     assert self.model._meta.module_name == response['type']
                     remote_id = int(response['object_id'])
@@ -100,6 +104,16 @@ class VkontakteManager(models.Manager):
     def api_call(self, method='get', **kwargs):
         return api_call(self.model.methods_namespace + '.' + self.methods[method], **kwargs)
 
+    def fetch(self, *args, **kwargs):
+        '''
+        Retrieve and save object to local DB
+        '''
+        result = self.get(*args, **kwargs)
+        if isinstance(result, list):
+            return [self.get_or_create_from_instance(instance) for instance in result]
+        else:
+            return self.get_or_create_from_instance(result)
+
     def get(self, *args, **kwargs):
         '''
         Retrieve objects from remote server
@@ -122,6 +136,7 @@ class VkontakteManager(models.Manager):
     def parse_response_dict(self, resource, extra_fields=None):
 
         instance = self.model()
+        # important to do it before calling parse method
         if extra_fields:
             instance.__dict__.update(extra_fields)
         instance.parse(resource)
@@ -148,24 +163,10 @@ class VkontakteManager(models.Manager):
                 log.error("Resource %s is not dictionary" % resource)
                 raise e
 
-            instance = self.model()
-            # important to do it before calling parse method
-            if extra_fields:
-                instance.__dict__.update(extra_fields)
-            instance.parse(resource)
+            instance = self.parse_response_dict(resource, extra_fields)
             instances += [instance]
 
         return instances
-
-    def fetch(self, **kwargs):
-        '''
-        Retrieve and save object to local DB
-        '''
-        result = self.get(**kwargs)
-        if isinstance(result, list):
-            return [self.get_or_create_from_instance(instance) for instance in result]
-        else:
-            return self.get_or_create_from_instance(result)
 
 class VkontakteModel(models.Model):
     class Meta:
