@@ -133,6 +133,7 @@ class VkontakteManager(models.Manager):
         else:
             raise VkontakteContentError('Vkontakte response should be list or dict, not %s' % response)
 
+    # TODO: rename to parse_response_object
     def parse_response_dict(self, resource, extra_fields=None):
 
         instance = self.model()
@@ -210,14 +211,14 @@ class VkontakteModel(models.Model):
                     value = float(value)
                 except:
                     pass
-            elif isinstance(field, models.DateTimeField) and value:
+            elif isinstance(field, models.DateTimeField):
                 try:
                     value = int(value)
                     assert value > 0
                     value = datetime.fromtimestamp(value)
                 except:
                     value = None
-            elif isinstance(field, models.DateField) and value:
+            elif isinstance(field, models.DateField):
                 try:
                     value = date(int(value[0:4]), int(value[5:7]), int(value[8:10]))
                 except:
