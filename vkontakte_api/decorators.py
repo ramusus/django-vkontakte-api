@@ -28,7 +28,7 @@ def fetch_all(func, return_all, kwargs_offset='offset'):
       * `kwargs_offset` - name of offset parameter among kwargs
     Usage:
 
-    @fetch_all(return_all=lambda instance,*a,**k: instance.items.all())
+    @fetch_all(return_all=lambda self,instance,*a,**k: instance.items.all())
     def fetch_something(self, ..., *kwargs):
         ....
     """
@@ -45,7 +45,7 @@ def fetch_all(func, return_all, kwargs_offset='offset'):
             else:
                 # do something
                 pass
-            return return_all(*args, **kwargs)
+            return return_all(self, *args, **kwargs)
         else:
             return func(self, *args, **kwargs)
 

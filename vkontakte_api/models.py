@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from django.db import models
+from django.core.exceptions import ImproperlyConfigured
 from django.db.models.fields import FieldDoesNotExist
 from datetime import datetime, date
 from vkontakte_api.utils import api_call, VkontakteError
@@ -51,8 +52,8 @@ class VkontakteManager(models.Manager):
             except self.model.DoesNotExist:
                 try:
                     response = api_call('resolveScreenName', **{'screen_name': slug})
-                except VkontakteError:
-                    log.error("Method get_by_slug returned error instead of response. Slug is '%s'" % slug)
+                except VkontakteError, e:
+                    log.error("Method get_by_slug returned error instead of response. Slug: '%s'. Error: %s" % (slug, e))
                     return None
                 try:
                     assert self.model._meta.module_name == response['type']
@@ -240,6 +241,51 @@ class VkontakteModel(models.Model):
 
     def get_url(self):
         return 'http://vk.com/%s' % self.slug
+
+    def fetch_likes(self, owner_id, item_id, offset=0, count=None, filter='likes', *args, **kwargs):
+        if count > 1000:
+            raise ValueError("Parameter 'count' can not be more than 1000")
+        if filter not in ['likes','copies']:
+            raise ValueError("Parameter 'filter' should be equal to 'likes' or 'copies'")
+        if self.likes_type is None:
+            raise ImproperlyConfigured("'likes_type' attribute should be specified")
+
+        # type
+        # тип Like-объекта. Подробнее о типах объектов можно узнать на странице Список типов Like-объектов.
+        kwargs['type'] = self.likes_type
+        # owner_id
+        # идентификатор владельца Like-объекта (id пользователя или id приложения). Если параметр type равен sitepage, то в качестве owner_id необходимо передавать id приложения. Если параметр не задан, то считается, что он равен либо идентификатору текущего пользователя, либо идентификатору текущего приложения (если type равен sitepage).
+        kwargs['owner_id'] = owner_id
+        # item_id
+        # идентификатор Like-объекта. Если type равен sitepage, то параметр item_id может содержать значение параметра page_id, используемый при инициализации виджета «Мне нравится».
+        kwargs['item_id'] = item_id
+        # page_url
+        # url страницы, на которой установлен виджет «Мне нравится». Используется вместо параметра item_id.
+
+        # filter
+        # указывает, следует ли вернуть всех пользователей, добавивших объект в список "Мне нравится" или только тех, которые рассказали о нем друзьям. Параметр может принимать следующие значения:
+        # likes – возвращать всех пользователей
+        # copies – возвращать только пользователей, рассказавших об объекте друзьям
+        # По умолчанию возвращаются все пользователи.
+        kwargs['filter'] = filter
+        # friends_only
+        # указывает, необходимо ли возвращать только пользователей, которые являются друзьями текущего пользователя. Параметр может принимать следующие значения:
+        # 0 – возвращать всех пользователей в порядке убывания времени добавления объекта
+        # 1 – возвращать только друзей текущего пользователя в порядке убывания времени добавления объекта
+        # Если метод был вызван без авторизации или параметр не был задан, то считается, что он равен 0.
+        kwargs['friends_only'] = 0
+        # offset
+        # смещение, относительно начала списка, для выборки определенного подмножества. Если параметр не задан, то считается, что он равен 0.
+        kwargs['offset'] = int(offset)
+        # count
+        # количество возвращаемых идентификаторов пользователей.
+        # Если параметр не задан, то считается, что он равен 100, если не задан параметр friends_only, в противном случае 10.
+        # Максимальное значение параметра 1000, если не задан параметр friends_only, в противном случае 100.
+        if count:
+            kwargs['count'] = int(count)
+
+        response = api_call('likes.getList', **kwargs)
+        return response['users']
 
 class VkontakteIDModel(VkontakteModel):
     class Meta:
