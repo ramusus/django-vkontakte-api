@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from django.utils.functional import wraps
+from django.db.models.query import QuerySet
 
 def opt_arguments(func):
     '''
@@ -18,7 +19,7 @@ def opt_arguments(func):
     return meta_wrapper
 
 @opt_arguments
-def fetch_all(func, return_all, kwargs_offset='offset'):
+def fetch_all(func, return_all=None, kwargs_offset='offset'):
     """
     Class method decorator for fetching all items. Add parameter `all=False` for decored method.
     If `all` is True, method runs as many times as it returns any results.
@@ -32,20 +33,25 @@ def fetch_all(func, return_all, kwargs_offset='offset'):
     def fetch_something(self, ..., *kwargs):
         ....
     """
-    def wrapper(self, all=False, *args, **kwargs):
+    def wrapper(self, all=False, instances_all=None, *args, **kwargs):
         if all:
+            if not instances_all:
+                instances_all = QuerySet().none()
+
             instances = func(self, *args, **kwargs)
+            instances_all |= instances
             instances_count = len(instances)
 
             if instances_count != 0:
                 # TODO: make protection somehow from endless loop in case
                 # where `kwargs_offset` argument is not make any sense for `func`
                 kwargs[kwargs_offset] = kwargs.get(kwargs_offset, 0) + instances_count
-                return wrapper(self, all=True, *args, **kwargs)
+                return wrapper(self, all=all, instances_all=instances_all, *args, **kwargs)
+
+            if return_all:
+                return return_all(self, *args, **kwargs)
             else:
-                # do something
-                pass
-            return return_all(self, *args, **kwargs)
+                return instances_all
         else:
             return func(self, *args, **kwargs)
 

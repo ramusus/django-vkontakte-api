@@ -1,10 +1,10 @@
-# Django Vkontakte API
-
-[![Build Status](https://travis-ci.org/ramusus/django-vkontakte-api.png?branch=master)](https://travis-ci.org/ramusus/django-vkontakte-api)
+Django Vkontakte API [![Build Status](https://travis-ci.org/ramusus/django-vkontakte-api.png?branch=master)](https://travis-ci.org/ramusus/django-vkontakte-api)
+====================
 
 Приложение позволяет взаимодействовать с объектами Вконтакте API используя стандартные модели Django
 
-## Установка
+Установка
+---------
 
     pip install django-vkontakte-api
 
@@ -25,7 +25,8 @@
     OAUTH_TOKENS_VKONTAKTE_PASSWORD = ''                                # user password
     OAUTH_TOKENS_VKONTAKTE_PHONE_END = ''                               # last 4 digits of user mobile phone
 
-## Покрытие методов API
+Покрытие методов API
+--------------------
 
 * [resolveScreenName](http://vk.com/developers.php?oid=-1&p=resolveScreenName) – определяет тип объекта (пользователь, группа, приложение) и его идентификатор по короткому имени screen_name;
 
@@ -33,7 +34,8 @@
 
 * [likes.getList](http://vk.com/developers.php?oid=-1&p=likes.getList) – возвращает список пользователей, которые добавили объект в список «Мне нравится»;
 
-## Примеры использования
+Примеры использования
+---------------------
 
 ### Запрос API
 
