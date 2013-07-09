@@ -7,6 +7,7 @@ from vkontakte_api.utils import api_call, VkontakteError
 from vkontakte_api import fields
 import logging
 import re
+from django.db.models.query import QuerySet
 
 log = logging.getLogger('vkontakte_api')
 
@@ -111,7 +112,11 @@ class VkontakteManager(models.Manager):
         '''
         result = self.get(*args, **kwargs)
         if isinstance(result, list):
-            return [self.get_or_create_from_instance(instance) for instance in result]
+            instances = QuerySet().none()
+            for instance in result:
+                instance = self.get_or_create_from_instance(instance)
+                instances |= instance.__class__.objects.filter(pk=instance.pk)
+            return instances
         else:
             return self.get_or_create_from_instance(result)
 
