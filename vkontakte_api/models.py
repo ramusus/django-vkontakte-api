@@ -247,7 +247,7 @@ class VkontakteModel(models.Model):
     def get_url(self):
         return 'http://vk.com/%s' % self.slug
 
-    def fetch_likes(self, owner_id, item_id, offset=0, count=None, filter='likes', *args, **kwargs):
+    def fetch_likes(self, owner_id, item_id, offset=0, count=1000, filter='likes', *args, **kwargs):
         if count > 1000:
             raise ValueError("Parameter 'count' can not be more than 1000")
         if filter not in ['likes','copies']:
@@ -286,8 +286,7 @@ class VkontakteModel(models.Model):
         # количество возвращаемых идентификаторов пользователей.
         # Если параметр не задан, то считается, что он равен 100, если не задан параметр friends_only, в противном случае 10.
         # Максимальное значение параметра 1000, если не задан параметр friends_only, в противном случае 100.
-        if count:
-            kwargs['count'] = int(count)
+        kwargs['count'] = int(count)
 
         response = api_call('likes.getList', **kwargs)
         return response['users']

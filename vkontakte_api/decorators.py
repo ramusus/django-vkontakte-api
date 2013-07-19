@@ -19,7 +19,7 @@ def opt_arguments(func):
     return meta_wrapper
 
 @opt_arguments
-def fetch_all(func, return_all=None, kwargs_offset='offset'):
+def fetch_all(func, return_all=None, kwargs_offset='offset', kwargs_count='count', default_count=None):
     """
     Class method decorator for fetching all items. Add parameter `all=False` for decored method.
     If `all` is True, method runs as many times as it returns any results.
@@ -42,7 +42,7 @@ def fetch_all(func, return_all=None, kwargs_offset='offset'):
             instances_all |= instances
             instances_count = len(instances)
 
-            if instances_count != 0:
+            if instances_count > 0 and (not default_count or instances_count == kwargs.get(kwargs_count, default_count)):
                 # TODO: make protection somehow from endless loop in case
                 # where `kwargs_offset` argument is not make any sense for `func`
                 kwargs[kwargs_offset] = kwargs.get(kwargs_offset, 0) + instances_count
