@@ -7,7 +7,6 @@ from vkontakte_api.utils import api_call, VkontakteError
 from vkontakte_api import fields
 import logging
 import re
-from django.db.models.query import QuerySet
 
 log = logging.getLogger('vkontakte_api')
 
@@ -109,11 +108,20 @@ class VkontakteManager(models.Manager):
     def fetch(self, *args, **kwargs):
         '''
         Retrieve and save object to local DB
+        Return queryset with respect to '_after' parameter, excluding all items before.
+        Decision about each item based on field in '_after_field_name' optional parameter ('date' by default)
         '''
+        after = kwargs.pop('_after', None)
+        after_field_name = kwargs.pop('_after_field_name', 'date')
+
         result = self.get(*args, **kwargs)
         if isinstance(result, list):
-            instances = QuerySet().none()
+            instances = self.model.objects.none()
             for instance in result:
+
+                if after and after > getattr(instance, after_field_name):
+                    break
+
                 instance = self.get_or_create_from_instance(instance)
                 instances |= instance.__class__.objects.filter(pk=instance.pk)
             return instances
@@ -123,6 +131,7 @@ class VkontakteManager(models.Manager):
     def get(self, *args, **kwargs):
         '''
         Retrieve objects from remote server
+        TODO: rename everywhere extra_fields to _extra_fields
         '''
         extra_fields = kwargs.pop('extra_fields', {})
         extra_fields['fetched'] = datetime.now()
