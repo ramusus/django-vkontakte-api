@@ -1,5 +1,5 @@
 from django.conf import settings
-from oauth_tokens.models import AccessToken
+from oauth_tokens.models import AccessToken, AccessTokenGettingError
 from ssl import SSLError
 import vkontakte
 import time
@@ -20,11 +20,18 @@ def get_tokens():
     '''
     return AccessToken.objects.filter(provider='vkontakte')
 
-def update_token():
+def update_token(count=1):
     '''
     Update token from provider and return it
     '''
-    return AccessToken.objects.get_from_provider('vkontakte')
+    try:
+        return AccessToken.objects.get_from_provider('vkontakte')
+    except AccessTokenGettingError, e:
+        if count <= 5:
+            time.sleep(10)
+            update_token(count+1)
+        else:
+            raise e
 
 def get_api():
     '''

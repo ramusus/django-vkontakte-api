@@ -41,7 +41,7 @@ class VkontakteManager(models.Manager):
 
     def get_by_slug(self, slug):
         '''
-        Return User, Group, Application by slug
+        Return existed User, Group, Application by slug or new intance with empty pk
         '''
         try:
             assert self.model.slug_prefix and slug.startswith(self.model.slug_prefix)
