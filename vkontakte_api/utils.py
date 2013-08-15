@@ -62,7 +62,7 @@ def api_call(method, **kwargs):
             vk = get_api()
             response = vk.get(method, timeout=TIMEOUT, **kwargs)
         elif e.code == 6:
-            log.warning("Vkontakte error: '%s'" % (e.description))
+            log.warning("Vkontakte error: '%s' on method: %s" % (e.description, method))
             time.sleep(10)
             response = api_call(method, **kwargs)
         elif e.code == 9:
