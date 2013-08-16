@@ -63,7 +63,7 @@ def api_call(method, recursion_count=0, **kwargs):
             response = vk.get(method, timeout=TIMEOUT, **kwargs)
         elif e.code == 6:
             log.warning("Vkontakte error: '%s' on method: %s, recursion count: %d" % (e.description, method, recursion_count))
-            time.sleep(10)
+            time.sleep(1)
             response = api_call(method, recursion_count+1, **kwargs)
         elif e.code == 9:
             log.warning("Vkontakte flood control registered while executing method %s with params %s, recursion count: %d" % (method, kwargs, recursion_count))

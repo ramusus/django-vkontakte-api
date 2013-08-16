@@ -33,3 +33,7 @@ class VkontakteApiTest(TestCase):
 
         instance = User.remote.get_by_slug('0x1337')
         self.assertEqual(instance, None)
+
+    def test_requests_limit_per_sec(self):
+        for i in range(0,20):
+            api_call('resolveScreenName', screen_name='durov')
