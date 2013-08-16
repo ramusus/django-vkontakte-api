@@ -47,7 +47,7 @@ def get_api():
         token = tokens[0].access_token
     return vkontakte.API(token=token)
 
-def api_call(method, **kwargs):
+def api_call(method, recursion_count=0, **kwargs):
     '''
     Call API using access_token
     '''
@@ -62,20 +62,20 @@ def api_call(method, **kwargs):
             vk = get_api()
             response = vk.get(method, timeout=TIMEOUT, **kwargs)
         elif e.code == 6:
-            log.warning("Vkontakte error: '%s' on method: %s" % (e.description, method))
+            log.warning("Vkontakte error: '%s' on method: %s, recursion count: %d" % (e.description, method, recursion_count))
             time.sleep(10)
-            response = api_call(method, **kwargs)
+            response = api_call(method, recursion_count+1, **kwargs)
         elif e.code == 9:
-            log.warning("Vkontakte flood control registered while executing method %s with params %s" % (method, kwargs))
+            log.warning("Vkontakte flood control registered while executing method %s with params %s, recursion count: %d" % (method, kwargs, recursion_count))
             time.sleep(1)
-            response = api_call(method, **kwargs)
+            response = api_call(method, recursion_count+1, **kwargs)
         else:
             log.error("Unhandled vkontakte error raised: %s", e)
             raise e
     except SSLError, e:
-        log.error("SSLError: '%s' registered while executing method %s with params %s" % (e, method, kwargs))
+        log.error("SSLError: '%s' registered while executing method %s with params %s, recursion count: %d" % (e, method, kwargs, recursion_count))
         time.sleep(1)
-        response = api_call(method, **kwargs)
+        response = api_call(method, recursion_count+1, **kwargs)
     except Exception, e:
         log.error("Unhandled error: %s registered while executing method %s with params %s" % (e, method, kwargs))
         raise e
