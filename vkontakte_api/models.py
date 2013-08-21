@@ -103,6 +103,8 @@ class VkontakteManager(models.Manager):
         return self.get_or_create_from_instance(instance)
 
     def api_call(self, method='get', **kwargs):
+        if self.model.methods_access_tag:
+            kwargs['methods_access_tag'] = self.model.methods_access_tag
         return api_call(self.model.methods_namespace + '.' + self.methods[method], **kwargs)
 
     def fetch(self, *args, **kwargs):

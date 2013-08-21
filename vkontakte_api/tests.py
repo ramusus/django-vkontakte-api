@@ -4,6 +4,7 @@ from django.db import models
 from parser import VkontakteParser
 from models import VkontakteIDModel, VkontakteManager
 from utils import api_call, VkontakteError
+import mock
 
 class User(VkontakteIDModel):
     screen_name = models.CharField(u'Короткое имя группы', max_length=50, db_index=True)
@@ -12,6 +13,7 @@ class User(VkontakteIDModel):
     remote = VkontakteManager()
 
 class VkontakteApiTest(TestCase):
+    fixtures = ['oauth_tokens.usercredentials.json',]
 
     def test_parse_page(self):
 
@@ -34,6 +36,8 @@ class VkontakteApiTest(TestCase):
         instance = User.remote.get_by_slug('0x1337')
         self.assertEqual(instance, None)
 
-    def test_requests_limit_per_sec(self):
+    @mock.patch('time.sleep')
+    def test_requests_limit_per_sec(self, sleep, *args, **kwargs):
         for i in range(0,20):
             api_call('resolveScreenName', screen_name='durov')
+            print sleep.called, sleep.call_count
