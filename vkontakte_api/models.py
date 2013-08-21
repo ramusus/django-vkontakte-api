@@ -191,6 +191,8 @@ class VkontakteModel(models.Model):
         abstract = True
 
     remote_pk_field = 'id'
+    methods_access_tag = ''
+    methods_namespace = ''
 
     fetched = models.DateTimeField(u'Обновлено', null=True, blank=True)
 
