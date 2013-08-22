@@ -70,13 +70,13 @@ def api_call(method, recursion_count=0, methods_access_tag=None, used_access_tok
         response = vk.get(method, timeout=TIMEOUT, **kwargs)
     except VkontakteError, e:
         if e.code == 5:
-            log.debug("Updating vkontakte access token, recursion count: %d" % recursion_count)
+            log.info("Updating vkontakte access token, recursion count: %d" % recursion_count)
             update_tokens()
             ACCESS_TOKEN = None
             return api_call(method, recursion_count+1, methods_access_tag, **kwargs)
         elif e.code == 6:
             # try access_token of another user
-            log.debug("Vkontakte error 'Too many requests per second' on method: %s, recursion count: %d" % (method, recursion_count))
+            log.info("Vkontakte error 'Too many requests per second' on method: %s, recursion count: %d" % (method, recursion_count))
             used_access_tokens = [vk.token] + (used_access_tokens or [])
             return api_call(method, recursion_count+1, methods_access_tag, used_access_tokens=used_access_tokens, **kwargs)
         elif e.code == 9:
