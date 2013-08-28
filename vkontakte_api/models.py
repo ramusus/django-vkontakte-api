@@ -2,6 +2,7 @@
 from django.db import models
 from django.core.exceptions import ImproperlyConfigured
 from django.db.models.fields import FieldDoesNotExist
+from django.db.models.query import QuerySet
 from datetime import datetime, date
 from vkontakte_api.utils import api_call, VkontakteError
 from vkontakte_api import fields
@@ -127,6 +128,8 @@ class VkontakteManager(models.Manager):
                 instance = self.get_or_create_from_instance(instance)
                 instances |= instance.__class__.objects.filter(pk=instance.pk)
             return instances
+        elif isinstance(result, QuerySet):
+            return result
         else:
             return self.get_or_create_from_instance(result)
 
@@ -170,7 +173,7 @@ class VkontakteManager(models.Manager):
             if isinstance(resource, list) and len(resource):
                 resource = resource[0]
 
-            # in some responses first value is `count of all values:
+            # in some responses first value is `count` of all values:
             # http://vk.com/developers.php?oid=-1&p=groups.search
             if isinstance(resource, int):
                 continue
