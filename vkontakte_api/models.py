@@ -106,7 +106,12 @@ class VkontakteManager(models.Manager):
     def api_call(self, method='get', **kwargs):
         if self.model.methods_access_tag:
             kwargs['methods_access_tag'] = self.model.methods_access_tag
-        return api_call(self.model.methods_namespace + '.' + self.methods[method], **kwargs)
+
+        method = self.methods[method]
+        if self.model.methods_namespace:
+            method = self.model.methods_namespace + '.' + method
+
+        return api_call(method, **kwargs)
 
     def fetch(self, *args, **kwargs):
         '''

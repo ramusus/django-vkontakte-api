@@ -29,8 +29,8 @@ def fetch_all(func, return_all=None, kwargs_offset='offset', kwargs_count='count
       * `kwargs_offset` - name of offset parameter among kwargs
     Usage:
 
-    @fetch_all(return_all=lambda self,instance,*a,**k: instance.items.all())
-    def fetch_something(self, ..., *kwargs):
+        @fetch_all(return_all=lambda self,instance,*a,**k: instance.items.all())
+        def fetch_something(self, ..., *kwargs):
         ....
     """
     def wrapper(self, all=False, instances_all=None, *args, **kwargs):
@@ -55,4 +55,27 @@ def fetch_all(func, return_all=None, kwargs_offset='offset', kwargs_count='count
         else:
             return func(self, *args, **kwargs)
 
+    return wraps(func)(wrapper)
+
+def opt_generator(func):
+    """
+    Class method or function decorator makes able to call generator methods as usual methods.
+    Usage:
+
+        @method_decorator(opt_generator)
+        def some_method(self, ...):
+            ...
+            for count in some_another_method():
+                yield (count, total)
+
+    It's possible to call this method 2 different ways:
+
+        * instance.some_method() - it will return nothing
+        * for count, total in instance.some_method(as_generator=True):
+            print count, total
+    """
+    def wrapper(self, *args, **kwargs):
+        as_generator = kwargs.pop('as_generator', False)
+        result = func(self, *args, **kwargs)
+        return result if as_generator else list(result)
     return wraps(func)(wrapper)

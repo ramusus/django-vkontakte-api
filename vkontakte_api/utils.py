@@ -52,7 +52,6 @@ def api_call(method, recursion_count=0, methods_access_tag=None, used_access_tok
     '''
     Call API using access_token
     '''
-
     try:
         vk = get_api(tag=methods_access_tag, used_access_tokens=used_access_tokens)
     except NoActiveTokens, e:
