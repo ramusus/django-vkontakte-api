@@ -74,8 +74,8 @@ def opt_generator(func):
         * for count, total in instance.some_method(as_generator=True):
             print count, total
     """
-    def wrapper(self, *args, **kwargs):
+    def wrapper(*args, **kwargs):
         as_generator = kwargs.pop('as_generator', False)
-        result = func(self, *args, **kwargs)
+        result = func(*args, **kwargs)
         return result if as_generator else list(result)
     return wraps(func)(wrapper)

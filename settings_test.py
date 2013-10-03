@@ -1,5 +1,6 @@
 INSTALLED_APPS = (
     'oauth_tokens',
+    'taggit',
 )
 
 OAUTH_TOKENS_VKONTAKTE_CLIENT_ID = 3430034

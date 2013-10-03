@@ -28,11 +28,8 @@ Django Vkontakte API [![Build Status](https://travis-ci.org/ramusus/django-vkont
 Покрытие методов API
 --------------------
 
-* [resolveScreenName](http://vk.com/developers.php?oid=-1&p=resolveScreenName) – определяет тип объекта (пользователь, группа, приложение) и его идентификатор по короткому имени screen_name;
-
-В планах:
-
-* [likes.getList](http://vk.com/developers.php?oid=-1&p=likes.getList) – возвращает список пользователей, которые добавили объект в список «Мне нравится»;
+* [resolveScreenName](http://vk.com/dev/resolveScreenName) – определяет тип объекта (пользователь, группа, приложение) и его идентификатор по короткому имени screen_name;
+* [likes.getList](http://vk.com/dev/likes.getList) – возвращает список пользователей, которые добавили объект в список «Мне нравится»;
 
 Примеры использования
 ---------------------
