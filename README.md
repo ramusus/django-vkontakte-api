@@ -1,5 +1,7 @@
-Django Vkontakte API [![Build Status](https://travis-ci.org/ramusus/django-vkontakte-api.png?branch=master)](https://travis-ci.org/ramusus/django-vkontakte-api)
+Django Vkontakte API
 ====================
+
+[![PyPI version](https://badge.fury.io/py/django-vkontakte-api.png)](http://badge.fury.io/py/django-vkontakte-api) [![Build Status](https://travis-ci.org/ramusus/django-vkontakte-api.png?branch=master)](https://travis-ci.org/ramusus/django-vkontakte-api)
 
 Приложение позволяет взаимодействовать с объектами Вконтакте API используя стандартные модели Django
 
@@ -13,6 +15,7 @@ Django Vkontakte API [![Build Status](https://travis-ci.org/ramusus/django-vkont
     INSTALLED_APPS = (
         ...
         'oauth_tokens',
+        'taggit',
         'vkontakte_api',
     )
 
