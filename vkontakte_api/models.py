@@ -11,11 +11,14 @@ import re
 
 log = logging.getLogger('vkontakte_api')
 
+
 class VkontakteDeniedAccessError(Exception):
     pass
 
+
 class VkontakteContentError(Exception):
     pass
+
 
 class VkontakteManager(models.Manager):
     '''
@@ -113,6 +116,18 @@ class VkontakteManager(models.Manager):
 
         return api_call(method, **kwargs)
 
+    def create(self, *args, **kwargs):
+        return self.api_call(method='create', **kwargs)
+
+    def edit(self, *args, **kwargs):
+        return self.api_call(method='edit', **kwargs)
+
+    def delete(self, *args, **kwargs):
+        return self.api_call(method='delete', **kwargs)
+
+    def restore(self, *args, **kwargs):
+        return self.api_call(method='restore', **kwargs)
+
     def fetch(self, *args, **kwargs):
         '''
         Retrieve and save object to local DB
@@ -194,6 +209,7 @@ class VkontakteManager(models.Manager):
 
         return instances
 
+
 class VkontakteModel(models.Model):
     class Meta:
         abstract = True
@@ -271,7 +287,7 @@ class VkontakteModel(models.Model):
     def fetch_likes(self, owner_id, item_id, offset=0, count=1000, filter='likes', *args, **kwargs):
         if count > 1000:
             raise ValueError("Parameter 'count' can not be more than 1000")
-        if filter not in ['likes','copies']:
+        if filter not in ['likes', 'copies']:
             raise ValueError("Parameter 'filter' should be equal to 'likes' or 'copies'")
         if self.likes_type is None:
             raise ImproperlyConfigured("'likes_type' attribute should be specified")
@@ -311,6 +327,7 @@ class VkontakteModel(models.Model):
 
         response = api_call('likes.getList', **kwargs)
         return response['users']
+
 
 class VkontakteIDModel(VkontakteModel):
     class Meta:
