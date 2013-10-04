@@ -328,6 +328,29 @@ class VkontakteModel(models.Model):
         response = api_call('likes.getList', **kwargs)
         return response['users']
 
+        def refresh(self, *args, **kwargs):
+            kwargs['include_deleted'] = 1
+            objects = type(self).remote.fetch(*args, **kwargs)
+            if len(objects) == 1:
+                self.__dict__.update(objects[0].__dict__)
+                self.fetched = datetime.now()
+            else:
+                raise VkontakteContentError("Remote server returned more objects, than expected - %d instead of one. Object details: %s, request details: %s" % (len(objects), self.__dict__, kwargs))
+
+        def check_remote_existance(self, *args, **kwargs):
+            # if we found strange instances with small remote_id, archive
+            # them immediately
+            if self.remote_id < 10000:
+                self.archive(commit_remote=False)
+                return False
+
+            self.refresh(*args, **kwargs)
+            if self.archived:
+                self.archive(commit_remote=False)
+                return False
+            else:
+                return True
+
 
 class VkontakteIDModel(VkontakteModel):
     class Meta:
