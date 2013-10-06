@@ -363,7 +363,6 @@ class VkontakteCRUDModel(VkontakteModel):
 
     def update_remote(self, **kwargs):
         params = self.prepare_update_params(**kwargs)
-        print params
         response = type(self).remote.api_call(method='update', **params)
         if not response:
             message = "Error response '%s' while saving remote %s with ID %s and data '%s'" \
