@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from abc import abstractmethod
 from django.db import models
 from django.core.exceptions import ImproperlyConfigured
 from django.db.models.fields import FieldDoesNotExist
@@ -116,18 +117,6 @@ class VkontakteManager(models.Manager):
 
         return api_call(method, **kwargs)
 
-    def create(self, *args, **kwargs):
-        return self.api_call(method='create', **kwargs)
-
-    def edit(self, *args, **kwargs):
-        return self.api_call(method='edit', **kwargs)
-
-    def delete(self, *args, **kwargs):
-        return self.api_call(method='delete', **kwargs)
-
-    def restore(self, *args, **kwargs):
-        return self.api_call(method='restore', **kwargs)
-
     def fetch(self, *args, **kwargs):
         '''
         Retrieve and save object to local DB
@@ -208,6 +197,14 @@ class VkontakteManager(models.Manager):
             instances += [instance]
 
         return instances
+
+    def create(self, commit_remote=False, *args, **kwargs):
+        if commit_remote:
+            response = self.api_call(method='create', **kwargs)
+            if response:
+                kwargs.update(response)
+                return self.model().create(**kwargs)
+        return super(VkontakteManager, self).create(*args, **kwargs)
 
 
 class VkontakteModel(models.Model):
@@ -328,29 +325,6 @@ class VkontakteModel(models.Model):
         response = api_call('likes.getList', **kwargs)
         return response['users']
 
-        def refresh(self, *args, **kwargs):
-            kwargs['include_deleted'] = 1
-            objects = type(self).remote.fetch(*args, **kwargs)
-            if len(objects) == 1:
-                self.__dict__.update(objects[0].__dict__)
-                self.fetched = datetime.now()
-            else:
-                raise VkontakteContentError("Remote server returned more objects, than expected - %d instead of one. Object details: %s, request details: %s" % (len(objects), self.__dict__, kwargs))
-
-        def check_remote_existance(self, *args, **kwargs):
-            # if we found strange instances with small remote_id, archive
-            # them immediately
-            if self.remote_id < 10000:
-                self.archive(commit_remote=False)
-                return False
-
-            self.refresh(*args, **kwargs)
-            if self.archived:
-                self.archive(commit_remote=False)
-                return False
-            else:
-                return True
-
 
 class VkontakteIDModel(VkontakteModel):
     class Meta:
@@ -361,3 +335,102 @@ class VkontakteIDModel(VkontakteModel):
     @property
     def slug(self):
         return self.slug_prefix + str(self.remote_id)
+
+
+class VkontakteCRUDModel(VkontakteModel):
+    class Meta:
+        abstract = True
+
+    archived = models.BooleanField(u'В архиве', default=False)
+
+    def save(self, commit_remote=True, *args, **kwargs):
+        '''
+        Update remote version of object before saving if data is different
+        '''
+        if commit_remote:
+            if not self.id and not self.fetched:
+                self.create_remote(**kwargs)
+            elif self.id and self.is_need_update:
+                self.update_remote(**kwargs)
+        super(VkontakteCRUDModel, self).save(*args, **kwargs)
+
+    def create_remote(self, **kwargs):
+        response = type(self).remote.api_call(
+                method='create', **self.prepare_create_params(**kwargs))
+        self.remote_id = self.parse_remote_id_from_response(response)
+        log.info("Remote object %s was created successfully with ID %s" \
+                % (self._meta.object_name, self.remote_id))
+
+    def update_remote(self, **kwargs):
+        params = self.prepare_update_params(**kwargs)
+        response = type(self).remote.api_call(method='update', **params)
+        if not response:
+            message = "Error response '%s' while saving remote %s with ID %s and data '%s'" \
+                    % (response, self._meta.object_name, self.remote_id, params)
+            log.error(message)
+            raise VkontakteContentError(message)
+        log.info("Remote object %s with ID=%s was updated with fields '%s' successfully" \
+                % (self._meta.object_name, self.remote_id, params))
+
+    @property
+    def is_need_update(self):
+        old = type(self).objects.get(remote_id=self.remote_id)
+        return old.__dict__ != self.__dict__
+
+    @abstractmethod
+    def prepare_create_params(self, *args, **kwargs):
+        return {}
+
+    @abstractmethod
+    def prepare_update_params(self, *args, **kwargs):
+        return {}
+
+    @abstractmethod
+    def prepare_delete_restore_params(self):
+        return {}
+
+    @abstractmethod
+    def parse_remote_id_from_response(self, *args, **kwargs):
+        return None
+
+    def delete(self, commit_remote=True, *args, **kwargs):
+        self.archive(commit_remote)
+
+    def restore(self, commit_remote=True, *args, **kwargs):
+        self.archive(commit_remote, restore=True)
+
+    def archive(self, commit_remote=True, restore=False):
+        '''
+        TODO: Response right, but remote objects still exists (deleting clients)
+        Archive or delete objects remotely and mark it archived localy
+        '''
+        if commit_remote and self.remote_id:
+            method = 'delete' if not restore else 'restore'
+            params = self.prepare_delete_restore_params()
+            response = type(self).remote.api_call(method=method, **params)
+            model = self._meta.object_name
+            if response != [0]:
+                message = "Error response '%s' while deleting remote %s with ID %s" % (response, model, self.remote_id)
+                log.error(message)
+                raise VkontakteContentError(message)
+            log.info("Remote object %s with ID %s was deleted successfully" % (model, self.remote_id))
+
+        self.archived = True if not restore else False
+        self.save(commit_remote=False)
+
+    def refresh(self, *args, **kwargs):
+        kwargs['include_deleted'] = 1
+        objects = type(self).remote.fetch(*args, **kwargs)
+        if len(objects) == 1:
+            self.__dict__.update(objects[0].__dict__)
+            self.fetched = datetime.now()
+        else:
+            raise VkontakteContentError("Remote server returned more objects, than expected - %d instead of one. Object details: %s, request details: %s" % (len(objects), self.__dict__, kwargs))
+
+    def check_remote_existance(self, *args, **kwargs):
+        self.refresh(*args, **kwargs)
+        if self.archived:
+            self.archive(commit_remote=False)
+            return False
+        else:
+            return True
