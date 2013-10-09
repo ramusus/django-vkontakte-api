@@ -409,7 +409,7 @@ class VkontakteCRUDModel(VkontakteModel):
             params = self.prepare_delete_restore_params()
             response = type(self).remote.api_call(method=method, **params)
             model = self._meta.object_name
-            if response != [0]:
+            if not response:
                 message = "Error response '%s' while deleting remote %s with ID %s" % (response, model, self.remote_id)
                 log.error(message)
                 raise VkontakteContentError(message)
