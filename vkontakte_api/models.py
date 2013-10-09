@@ -198,13 +198,15 @@ class VkontakteManager(models.Manager):
 
         return instances
 
-    def create(self, commit_remote=False, *args, **kwargs):
+
+class VkontakteCRUDManager(VkontakteManager):
+    def create(self, commit_remote=True, *args, **kwargs):
         if commit_remote:
             response = self.api_call(method='create', **kwargs)
-            if response:
+            if response and isinstance(self.model(), VkontakteCRUDModel):
                 kwargs.update(response)
                 return self.model().create(**kwargs)
-        return super(VkontakteManager, self).create(*args, **kwargs)
+        return super(VkontakteCRUDManager, self).create(*args, **kwargs)
 
 
 class VkontakteModel(models.Model):
@@ -350,7 +352,7 @@ class VkontakteCRUDModel(VkontakteModel):
         if commit_remote:
             if not self.id and not self.fetched:
                 self.create_remote(**kwargs)
-            elif self.id and self.is_need_update:
+            elif self.id and self.fields_changed:
                 self.update_remote(**kwargs)
         super(VkontakteCRUDModel, self).save(*args, **kwargs)
 
@@ -373,44 +375,79 @@ class VkontakteCRUDModel(VkontakteModel):
                 % (self._meta.object_name, self.remote_id, params))
 
     @property
-    def is_need_update(self):
+    def fields_changed(self):
         old = type(self).objects.get(remote_id=self.remote_id)
         return old.__dict__ != self.__dict__
 
     @abstractmethod
-    def prepare_create_params(self, *args, **kwargs):
-        return {}
+    def prepare_create_params(self, **kwargs):
+        """
+        Prepar params for remote create object.
+        Incoming params:
+            **kwargs   - include fields, which model instance hasn't
+
+        return {param_key: val, ....}
+        """
+        raise NotImplementedError
 
     @abstractmethod
-    def prepare_update_params(self, *args, **kwargs):
-        return {}
+    def prepare_update_params(self):
+        """
+        Prepar params for remote update object.
+
+        return {param_key: val, ....}
+        """
+        raise NotImplementedError
 
     @abstractmethod
     def prepare_delete_restore_params(self):
-        return {}
+        """
+        Prepar params for remote delete/restore object.
+
+        return {param_key: val, ....}
+        """
+        raise NotImplementedError
 
     @abstractmethod
-    def parse_remote_id_from_response(self, *args, **kwargs):
-        return None
+    def parse_remote_id_from_response(self, response):
+        """
+        Extract remote_id from response from API create call.
+        Incoming param:
+            response   - API crete call response
+
+        return 'some_id'
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    def create(self, *args, **kwargs):
+        """
+        Create object into model after remote create,
+        whit remote manager fetch()
+
+        return create_model_object
+        """
+        raise NotImplementedError
 
     def delete(self, commit_remote=True, *args, **kwargs):
-        self.archive(commit_remote)
+        if not self.archived:
+            self.archive(commit_remote)
 
     def restore(self, commit_remote=True, *args, **kwargs):
-        self.archive(commit_remote, restore=True)
+        if self.archived:
+            self.archive(commit_remote, restore=True)
 
     def archive(self, commit_remote=True, restore=False):
         '''
-        TODO: Response right, but remote objects still exists (deleting clients)
         Archive or delete objects remotely and mark it archived localy
         '''
         if commit_remote and self.remote_id:
             method = 'delete' if not restore else 'restore'
             params = self.prepare_delete_restore_params()
-            is_edited = type(self).remote.api_call(method=method, **params)
+            success = type(self).remote.api_call(method=method, **params)
             model = self._meta.object_name
-            if not is_edited:
-                message = "Error response '%s' while deleting remote %s with ID %s" % (is_edited, model, self.remote_id)
+            if not success:
+                message = "Error response '%s' while deleting remote %s with ID %s" % (success, model, self.remote_id)
                 log.error(message)
                 raise VkontakteContentError(message)
             log.info("Remote object %s with ID %s was deleted successfully" % (model, self.remote_id))
@@ -419,7 +456,12 @@ class VkontakteCRUDModel(VkontakteModel):
         self.save(commit_remote=False)
 
     def refresh(self, *args, **kwargs):
-        kwargs['include_deleted'] = 1
+        """
+        Refresh remote data for current model.
+
+        You need to refresh the child to identify and send the kwargs,
+        which will allow the parent to get the current object.
+        """
         objects = type(self).remote.fetch(*args, **kwargs)
         if len(objects) == 1:
             self.__dict__.update(objects[0].__dict__)
