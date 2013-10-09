@@ -407,10 +407,10 @@ class VkontakteCRUDModel(VkontakteModel):
         if commit_remote and self.remote_id:
             method = 'delete' if not restore else 'restore'
             params = self.prepare_delete_restore_params()
-            response = type(self).remote.api_call(method=method, **params)
+            is_edited = type(self).remote.api_call(method=method, **params)
             model = self._meta.object_name
-            if not response:
-                message = "Error response '%s' while deleting remote %s with ID %s" % (response, model, self.remote_id)
+            if not is_edited:
+                message = "Error response '%s' while deleting remote %s with ID %s" % (is_edited, model, self.remote_id)
                 log.error(message)
                 raise VkontakteContentError(message)
             log.info("Remote object %s with ID %s was deleted successfully" % (model, self.remote_id))
