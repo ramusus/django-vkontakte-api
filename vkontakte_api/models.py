@@ -199,16 +199,6 @@ class VkontakteManager(models.Manager):
         return instances
 
 
-class VkontakteCRUDManager(VkontakteManager):
-    def create(self, commit_remote=True, *args, **kwargs):
-        if commit_remote:
-            response = self.api_call(method='create', **kwargs)
-            if response and isinstance(self.model(), VkontakteCRUDModel):
-                kwargs.update(response)
-                return self.model().create(**kwargs)
-        return super(VkontakteCRUDManager, self).create(*args, **kwargs)
-
-
 class VkontakteModel(models.Model):
     class Meta:
         abstract = True
@@ -416,16 +406,6 @@ class VkontakteCRUDModel(VkontakteModel):
             response   - API crete call response
 
         return 'some_id'
-        """
-        raise NotImplementedError
-
-    @abstractmethod
-    def create(self, *args, **kwargs):
-        """
-        Create object into model after remote create,
-        whit remote manager fetch()
-
-        return create_model_object
         """
         raise NotImplementedError
 
