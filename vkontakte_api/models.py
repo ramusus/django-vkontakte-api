@@ -202,7 +202,7 @@ class VkontakteModel(models.Model):
     methods_access_tag = ''
     methods_namespace = ''
 
-    fetched = models.DateTimeField(u'Обновлено', null=True, blank=True)
+    fetched = models.DateTimeField(u'Обновлено', null=True, blank=True, db_index=True)
 
     objects = models.Manager()
 
