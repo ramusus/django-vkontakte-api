@@ -17,6 +17,9 @@ class VkontakteDeniedAccessError(Exception):
 class VkontakteContentError(Exception):
     pass
 
+class VkontakteParseError(Exception):
+    pass
+
 class VkontakteManager(models.Manager):
     '''
     Vkontakte Ads API Manager for RESTful CRUD operations
@@ -199,6 +202,7 @@ class VkontakteModel(models.Model):
         abstract = True
 
     remote_pk_field = 'id'
+    remote_pk_local_field = 'remote_id'
     methods_access_tag = ''
     methods_namespace = ''
 
@@ -219,7 +223,7 @@ class VkontakteModel(models.Model):
         '''
         for key, value in response.items():
             if key == self.remote_pk_field:
-                key = 'remote_id'
+                key = self.remote_pk_local_field
                 value = int(value)
 
             try:
@@ -252,8 +256,14 @@ class VkontakteModel(models.Model):
                     value = None
 
             elif isinstance(field, models.OneToOneField) and value:
-                rel_instance = field.rel.to()
-                rel_instance.parse(dict(value))
+                rel_class = field.rel.to
+                if isinstance(value, int):
+                    try:
+                        rel_instance = rel_class.objects.get(pk=value)
+                    except rel_class.DoesNotExist:
+                        raise VkontakteParseError("OneToOne relation of model %s (PK=%s) does not exist" % (rel_class.__name__, value))
+                else:
+                    rel_instance = rel_class().parse(dict(value))
                 value = rel_instance
 
             if isinstance(field, (fields.CommaSeparatedCharField, models.CommaSeparatedIntegerField)) and isinstance(value, list):
@@ -317,6 +327,16 @@ class VkontakteIDModel(VkontakteModel):
         abstract = True
 
     remote_id = models.BigIntegerField(u'ID', help_text=u'Уникальный идентификатор', unique=True)
+
+    @property
+    def slug(self):
+        return self.slug_prefix + str(self.remote_id)
+
+class VkontaktePKModel(VkontakteModel):
+    class Meta:
+        abstract = True
+
+    remote_id = models.BigIntegerField(u'ID', help_text=u'Уникальный идентификатор', primary_key=True)
 
     @property
     def slug(self):
