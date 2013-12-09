@@ -334,8 +334,14 @@ class VkontakteCRUDModel(VkontakteModel):
         abstract = True
 
     archived = models.BooleanField(u'В архиве', default=False)
+    _commit_remote = True
 
-    def save(self, commit_remote=True, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
+        self._commit_remote = kwargs.pop('commit_remote', self._commit_remote)
+        super(VkontakteCRUDModel, self).__init__(*args, **kwargs)
+
+    #def save(self, commit_remote=True, *args, **kwargs):
+    def save(self, commit_remote=None, *args, **kwargs):
         '''
         Update remote version of object before saving if data is different
         '''
