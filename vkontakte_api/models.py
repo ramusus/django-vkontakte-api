@@ -4,6 +4,7 @@ from django.db import models
 from django.core.exceptions import ImproperlyConfigured
 from django.db.models.fields import FieldDoesNotExist
 from django.db.models.query import QuerySet
+from django.conf import settings
 from datetime import datetime, date
 from vkontakte_api.utils import api_call, VkontakteError
 from vkontakte_api import fields
@@ -11,6 +12,8 @@ import logging
 import re
 
 log = logging.getLogger('vkontakte_api')
+
+COMMIT_REMOTE = getattr(settings, 'VKONTAKTE_API_COMMIT_REMOTE', True)
 
 
 class VkontakteDeniedAccessError(Exception):
@@ -20,8 +23,10 @@ class VkontakteDeniedAccessError(Exception):
 class VkontakteContentError(Exception):
     pass
 
+
 class VkontakteParseError(Exception):
     pass
+
 
 class VkontakteManager(models.Manager):
     '''
@@ -349,27 +354,31 @@ class VkontaktePKModel(VkontakteModel):
         return self.slug_prefix + str(self.remote_id)
 
 
-class VkontakteCRUDModel(VkontakteModel):
+class VkontakteCRUDModel(models.Model):
     class Meta:
         abstract = True
 
-    archived = models.BooleanField(u'В архиве', default=False)
+    # list of required number of fields for updating model remotely
+    fields_required_for_update = []
+
+    # flag should we update model remotely on save() and delete() methods
     _commit_remote = True
+
+    archived = models.BooleanField(u'В архиве', default=False)
 
     def __init__(self, *args, **kwargs):
         self._commit_remote = kwargs.pop('commit_remote', self._commit_remote)
         super(VkontakteCRUDModel, self).__init__(*args, **kwargs)
 
-    #def save(self, commit_remote=True, *args, **kwargs):
     def save(self, commit_remote=None, *args, **kwargs):
         '''
         Update remote version of object before saving if data is different
         '''
         commit_remote = commit_remote if commit_remote is not None else self._commit_remote
-        if commit_remote:
-            if not self.id and not self.fetched:
+        if commit_remote and COMMIT_REMOTE:
+            if not self.pk and not self.fetched:
                 self.create_remote(**kwargs)
-            elif self.id and self.fields_changed:
+            elif self.pk and self.fields_changed:
                 self.update_remote(**kwargs)
         super(VkontakteCRUDModel, self).save(*args, **kwargs)
 
@@ -381,7 +390,8 @@ class VkontakteCRUDModel(VkontakteModel):
                 % (self._meta.object_name, self.remote_id))
 
     def update_remote(self, **kwargs):
-        params = self.prepare_update_params(**kwargs)
+        params = self.prepare_update_params_distinct(**kwargs)
+        # sometimes response contains 1, sometimes remote_id
         response = type(self).remote.api_call(method='update', **params)
         if not response:
             message = "Error response '%s' while saving remote %s with ID %s and data '%s'" \
@@ -395,6 +405,17 @@ class VkontakteCRUDModel(VkontakteModel):
     def fields_changed(self):
         old = type(self).objects.get(remote_id=self.remote_id)
         return old.__dict__ != self.__dict__
+
+    def prepare_update_params_distinct(self):
+        '''
+        Return dict with distinct set of fields for update
+        '''
+        old = type(self).objects.get(remote_id=self.remote_id)
+        fields_new = self.prepare_update_params().items()
+        fields_old = old.prepare_update_params().items()
+        fields = dict(set(fields_new).difference(set(fields_old)))
+        fields.update(dict([(k,v) for k,v in fields_new if k in self.fields_required_for_update]))
+        return fields
 
     @abstractmethod
     def prepare_create_params(self, **kwargs):
