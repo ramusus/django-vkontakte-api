@@ -365,6 +365,7 @@ class VkontakteCRUDModel(VkontakteModel):
         '''
         Update remote version of object before saving if data is different
         '''
+        commit_remote = commit_remote if commit_remote is not None else self._commit_remote
         if commit_remote:
             if not self.id and not self.fetched:
                 self.create_remote(**kwargs)
@@ -435,18 +436,19 @@ class VkontakteCRUDModel(VkontakteModel):
         """
         raise NotImplementedError
 
-    def delete(self, commit_remote=True, *args, **kwargs):
+    def delete(self, commit_remote=None, *args, **kwargs):
         if not self.archived:
             self.archive(commit_remote)
 
-    def restore(self, commit_remote=True, *args, **kwargs):
+    def restore(self, commit_remote=None, *args, **kwargs):
         if self.archived:
             self.archive(commit_remote, restore=True)
 
-    def archive(self, commit_remote=True, restore=False):
+    def archive(self, commit_remote=None, restore=False):
         '''
         Archive or delete objects remotely and mark it archived localy
         '''
+        commit_remote = commit_remote if commit_remote is not None else self._commit_remote
         if commit_remote and self.remote_id:
             method = 'delete' if not restore else 'restore'
             params = self.prepare_delete_restore_params()
