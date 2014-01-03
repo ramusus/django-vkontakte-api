@@ -79,3 +79,19 @@ def opt_generator(func):
         result = func(*args, **kwargs)
         return result if as_generator else list(result)
     return wraps(func)(wrapper)
+
+'''
+From here http://stackoverflow.com/questions/815110/is-there-a-decorator-to-simply-cache-function-return-values
+With modifications for properties
+'''
+def memoize(function):
+    memo = {}
+    def wrapper(*args, **kwargs):
+        key = args
+        if key in memo:
+            return memo[key]
+        else:
+            result = function(*args, **kwargs) if hasattr(function, '__call__') else function
+            memo[key] = result
+            return result
+    return wrapper
