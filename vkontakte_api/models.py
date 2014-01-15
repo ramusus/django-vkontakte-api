@@ -310,6 +310,14 @@ class VkontaktePKModel(VkontakteModel):
         return self.slug_prefix + str(self.remote_id)
 
 
+class VkontakteCRUDManager(models.Manager):
+
+    def create(self, *args, **kwargs):
+        instance = self.model(**kwargs)
+        instance.save()
+        return instance
+
+
 class VkontakteCRUDModel(models.Model):
     class Meta:
         abstract = True
@@ -362,13 +370,13 @@ class VkontakteCRUDModel(models.Model):
         old = type(self).objects.get(remote_id=self.remote_id)
         return old.__dict__ != self.__dict__
 
-    def prepare_update_params_distinct(self):
+    def prepare_update_params_distinct(self, **kwargs):
         '''
         Return dict with distinct set of fields for update
         '''
         old = type(self).objects.get(remote_id=self.remote_id)
-        fields_new = self.prepare_update_params().items()
-        fields_old = old.prepare_update_params().items()
+        fields_new = self.prepare_update_params(**kwargs).items()
+        fields_old = old.prepare_update_params(**kwargs).items()
         fields = dict(set(fields_new).difference(set(fields_old)))
         fields.update(dict([(k,v) for k,v in fields_new if k in self.fields_required_for_update]))
         return fields
@@ -376,38 +384,49 @@ class VkontakteCRUDModel(models.Model):
     @abstractmethod
     def prepare_create_params(self, **kwargs):
         """
-        Prepar params for remote create object.
+        Prepare params for remote create object.
         Incoming params:
-            **kwargs   - include fields, which model instance hasn't
+            **kwargs - fields, which model instance hasn't
 
         return {param_key: val, ....}
         """
         raise NotImplementedError
 
     @abstractmethod
-    def prepare_update_params(self):
+    def prepare_update_params(self, **kwargs):
         """
-        Prepar params for remote update object.
+        Prepare params for remote update object.
+        Incoming params:
+            **kwargs - fields, which model instance hasn't
 
         return {param_key: val, ....}
         """
         raise NotImplementedError
 
     @abstractmethod
-    def prepare_delete_restore_params(self):
+    def prepare_delete_params(self):
         """
-        Prepar params for remote delete/restore object.
+        Prepar params for remote delete object.
 
         return {param_key: val, ....}
         """
         raise NotImplementedError
+
+    @abstractmethod
+    def prepare_restore_params(self):
+        """
+        Prepar params for remote restore object.
+
+        return {param_key: val, ....}
+        """
+        return self.prepare_delete_params()
 
     @abstractmethod
     def parse_remote_id_from_response(self, response):
         """
         Extract remote_id from response from API create call.
         Incoming param:
-            response   - API crete call response
+            response - API crete call response
 
         return 'some_id'
         """
@@ -428,7 +447,7 @@ class VkontakteCRUDModel(models.Model):
         commit_remote = commit_remote if commit_remote is not None else self._commit_remote
         if commit_remote and self.remote_id:
             method = 'delete' if not restore else 'restore'
-            params = self.prepare_delete_restore_params()
+            params = self.prepare_delete_params()
             success = type(self).remote.api_call(method=method, **params)
             model = self._meta.object_name
             if not success:
