@@ -65,17 +65,36 @@ class QuickDjangoTest(object):
         """
         INSTALLED_APPS, settings_test = self.custom_settings()
 
+        test_db = os.environ.get('DB', 'sqlite')
+        if test_db == 'mysql':
+            database = {
+                'ENGINE': 'django.db.backends.mysql',
+                'NAME': 'django',
+                'USER': 'root',
+            }
+        elif test_db == 'postgres':
+            database = {
+                'ENGINE': 'django.db.backends.postgresql_psycopg2',
+                'USER': 'postgres',
+                'NAME': 'django',
+                'OPTIONS': {
+                    'autocommit': True,
+                }
+            }
+        else:
+            database = {
+                'ENGINE': 'django.db.backends.sqlite3',
+                'NAME': os.path.join(self.DIRNAME, 'database.db'),
+                'USER': '',
+                'PASSWORD': '',
+                'HOST': '',
+                'PORT': '',
+            }
+
         settings.configure(
             DEBUG = True,
             DATABASES = {
-                'default': {
-                    'ENGINE': 'django.db.backends.sqlite3',
-                    'NAME': os.path.join(self.DIRNAME, 'database.db'),
-                    'USER': '',
-                    'PASSWORD': '',
-                    'HOST': '',
-                    'PORT': '',
-                }
+                'default': database,
             },
             INSTALLED_APPS = self.INSTALLED_APPS + INSTALLED_APPS + self.apps,
             **settings_test

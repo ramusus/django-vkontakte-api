@@ -334,6 +334,27 @@ class VkontakteCRUDModel(models.Model):
         self._commit_remote = kwargs.pop('commit_remote', self._commit_remote)
         super(VkontakteCRUDModel, self).__init__(*args, **kwargs)
 
+    def delete(self, commit_remote=None, *args, **kwargs):
+        if not self.archived:
+            self.delete_remote(commit_remote)
+
+    def restore(self, commit_remote=None, *args, **kwargs):
+        if self.archived:
+            self.restore_remote(commit_remote)
+
+    def refresh(self, *args, **kwargs):
+        """
+        Refresh remote data for current model.
+
+        You need to refresh the child to identify and send the kwargs,
+        which will allow the parent to get the current object.
+        """
+        objects = type(self).remote.fetch(*args, **kwargs)
+        if len(objects) == 1:
+            self.__dict__.update(objects[0].__dict__)
+        else:
+            raise VkontakteContentError("Remote server returned more objects, than expected - %d instead of one. Object details: %s, request details: %s" % (len(objects), self.__dict__, kwargs))
+
     def save(self, commit_remote=None, *args, **kwargs):
         '''
         Update remote version of object before saving if data is different
@@ -364,6 +385,42 @@ class VkontakteCRUDModel(models.Model):
             raise VkontakteContentError(message)
         log.info("Remote object %s with ID=%s was updated with fields '%s' successfully" \
                 % (self._meta.object_name, self.remote_id, params))
+
+    def delete_remote(self, commit_remote=None):
+        '''
+        Delete objects remotely and mark it archived localy
+        '''
+        commit_remote = commit_remote if commit_remote is not None else self._commit_remote
+        if commit_remote and self.remote_id:
+            params = self.prepare_delete_params()
+            success = type(self).remote.api_call(method='delete', **params)
+            model = self._meta.object_name
+            if not success:
+                message = "Error response '%s' while deleting remote %s with ID %s" % (success, model, self.remote_id)
+                log.error(message)
+                raise VkontakteContentError(message)
+            log.info("Remote object %s with ID %s was deleted successfully" % (model, self.remote_id))
+
+        self.archived = True
+        self.save(commit_remote=False)
+
+    def restore_remote(self, commit_remote=None):
+        '''
+        Restore objects remotely and unmark it archived localy
+        '''
+        commit_remote = commit_remote if commit_remote is not None else self._commit_remote
+        if commit_remote and self.remote_id:
+            params = self.prepare_restore_params()
+            success = type(self).remote.api_call(method='restore', **params)
+            model = self._meta.object_name
+            if not success:
+                message = "Error response '%s' while restoring remote %s with ID %s" % (success, model, self.remote_id)
+                log.error(message)
+                raise VkontakteContentError(message)
+            log.info("Remote object %s with ID %s was restored successfully" % (model, self.remote_id))
+
+        self.archived = False
+        self.save(commit_remote=False)
 
     @property
     def fields_changed(self):
@@ -431,47 +488,6 @@ class VkontakteCRUDModel(models.Model):
         return 'some_id'
         """
         raise NotImplementedError
-
-    def delete(self, commit_remote=None, *args, **kwargs):
-        if not self.archived:
-            self.archive(commit_remote)
-
-    def restore(self, commit_remote=None, *args, **kwargs):
-        if self.archived:
-            self.archive(commit_remote, restore=True)
-
-    def archive(self, commit_remote=None, restore=False):
-        '''
-        Archive or delete objects remotely and mark it archived localy
-        '''
-        commit_remote = commit_remote if commit_remote is not None else self._commit_remote
-        if commit_remote and self.remote_id:
-            method = 'delete' if not restore else 'restore'
-            params = self.prepare_delete_params()
-            success = type(self).remote.api_call(method=method, **params)
-            model = self._meta.object_name
-            if not success:
-                message = "Error response '%s' while deleting remote %s with ID %s" % (success, model, self.remote_id)
-                log.error(message)
-                raise VkontakteContentError(message)
-            log.info("Remote object %s with ID %s was deleted successfully" % (model, self.remote_id))
-
-        self.archived = True if not restore else False
-        self.save(commit_remote=False)
-
-    def refresh(self, *args, **kwargs):
-        """
-        Refresh remote data for current model.
-
-        You need to refresh the child to identify and send the kwargs,
-        which will allow the parent to get the current object.
-        """
-        objects = type(self).remote.fetch(*args, **kwargs)
-        if len(objects) == 1:
-            self.__dict__.update(objects[0].__dict__)
-            self.fetched = datetime.now()
-        else:
-            raise VkontakteContentError("Remote server returned more objects, than expected - %d instead of one. Object details: %s, request details: %s" % (len(objects), self.__dict__, kwargs))
 
     def check_remote_existance(self, *args, **kwargs):
         self.refresh(*args, **kwargs)
