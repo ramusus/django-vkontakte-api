@@ -86,6 +86,13 @@ def api_call(method, recursion_count=0, methods_access_tag=None, used_access_tok
             log.warning("Internal server error: Database problems, try later. Error registered while executing method %s with params %s, recursion count: %d" % (method, kwargs, recursion_count))
             time.sleep(1)
             return api_call(method, recursion_count+1, methods_access_tag, **kwargs)
+#         elif e.code == 14:
+#             # captcha needed
+#             log.error(e)
+#             kwargs['captcha_sid'] = e.error['captcha_sid']
+#             kwargs['captcha_key'] = ''
+# #            print e.error['captcha_img']
+#             return api_call(method, recursion_count+1, methods_access_tag, **kwargs)
         else:
             log.error("Unhandled vkontakte error raised: %s", e)
             raise e

@@ -30,15 +30,11 @@ class VkontakteApiTest(TestCase):
 
         response = api_call('resolveScreenName', screen_name='durov')
         self.assertEqual(response, {u'object_id': 1, u'type': u'user'})
-        # fail with VkontakteError, when call with integer screen_name
-#         with self.assertRaises(VkontakteError):
-#             response = api_call('resolveScreenName', screen_name='0x1337')
+
+    def test_get_by_slug(self):
 
         instance = User.remote.get_by_slug('durov')
         self.assertEqual(instance.remote_id, 1)
-
-#         instance = User.remote.get_by_slug('0x1337')
-#         self.assertEqual(instance, None)
 
     @mock.patch('time.sleep')
     def test_requests_limit_per_sec(self, sleep, *args, **kwargs):

@@ -41,5 +41,5 @@ Django Vkontakte API
     >>> from vkontakte_api.utils import api_call
     >>> api_call('resolveScreenName', **{'screen_name': 'durov'})
     {u'object_id': 1, u'type': u'user'}
-    >>> api_call('resolveScreenName', **{'screen_name': 'cocacola'})
-    {u'object_id': 16297716, u'type': u'group'}
+    >>> api_call('users.get', **{'user_ids': 'durov'})
+    [{'first_name': u'Павел', 'last_name': u'Дуров', 'uid': 1}]

@@ -280,9 +280,23 @@ class VkontakteModel(models.Model):
 
             setattr(self, key, value)
 
+    def refresh(self):
+        """
+        Refresh current model with remote data
+        """
+        objects = type(self).remote.fetch(**self.refresh_kwargs)
+        if len(objects) == 1:
+            self.__dict__.update(objects[0].__dict__)
+        else:
+            raise VkontakteContentError("Remote server returned more objects, than expected - %d instead of one. Object details: %s, request details: %s" % (len(objects), self.__dict__, kwargs))
+
+    @property
+    def refresh_kwargs(self):
+        raise NotImplementedError("You must specify property `refresh_kwargs` for %s" % type(self))
+
     @property
     def slug(self):
-        raise NotImplementedError("You must specify slug for model")
+        raise NotImplementedError("You must specify property `slug` for %s" % type(self))
 
     def get_url(self):
         return 'http://vk.com/%s' % self.slug
@@ -341,19 +355,6 @@ class VkontakteCRUDModel(models.Model):
     def restore(self, commit_remote=None, *args, **kwargs):
         if self.archived:
             self.restore_remote(commit_remote)
-
-    def refresh(self, *args, **kwargs):
-        """
-        Refresh remote data for current model.
-
-        You need to refresh the child to identify and send the kwargs,
-        which will allow the parent to get the current object.
-        """
-        objects = type(self).remote.fetch(*args, **kwargs)
-        if len(objects) == 1:
-            self.__dict__.update(objects[0].__dict__)
-        else:
-            raise VkontakteContentError("Remote server returned more objects, than expected - %d instead of one. Object details: %s, request details: %s" % (len(objects), self.__dict__, kwargs))
 
     def save(self, commit_remote=None, *args, **kwargs):
         '''
