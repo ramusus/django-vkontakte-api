@@ -290,16 +290,16 @@ class VkontakteModel(models.Model):
         else:
             raise VkontakteContentError("Remote server returned more objects, than expected - %d instead of one. Object details: %s, request details: %s" % (len(objects), self.__dict__, kwargs))
 
+    def get_url(self):
+        return 'http://vk.com/%s' % self.slug
+
     @property
     def refresh_kwargs(self):
-        raise NotImplementedError("You must specify property `refresh_kwargs` for %s" % type(self))
+        raise NotImplementedError("Property %s.refresh_kwargs should be specified" % type(self))
 
     @property
     def slug(self):
-        raise NotImplementedError("You must specify property `slug` for %s" % type(self))
-
-    def get_url(self):
-        return 'http://vk.com/%s' % self.slug
+        raise NotImplementedError("Property %s.slug should be specified" % type(self))
 
 
 class VkontakteIDModel(VkontakteModel):
