@@ -127,20 +127,11 @@ class VkontakteManager(models.Manager):
     def fetch(self, *args, **kwargs):
         '''
         Retrieve and save object to local DB
-        Return queryset with respect to '_after' parameter, excluding all items before.
-        Decision about each item based on field in '_after_field_name' optional parameter ('date' by default)
         '''
-        after = kwargs.pop('_after', None)
-        after_field_name = kwargs.pop('_after_field_name', 'date')
-
         result = self.get(*args, **kwargs)
         if isinstance(result, list):
             instances = self.model.objects.none()
             for instance in result:
-
-                if after and after > getattr(instance, after_field_name):
-                    break
-
                 instance = self.get_or_create_from_instance(instance)
                 instances |= instance.__class__.objects.filter(pk=instance.pk)
             return instances
