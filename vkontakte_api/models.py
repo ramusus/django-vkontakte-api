@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from abc import abstractmethod
-from django.db import models
+from django.db import models, transaction
 from django.core.exceptions import ImproperlyConfigured
 from django.db.models.fields import FieldDoesNotExist
 from django.db.models.query import QuerySet
@@ -124,6 +124,7 @@ class VkontakteManager(models.Manager):
 
         return api_call(method, **kwargs)
 
+    @transaction.commit_on_success
     def fetch(self, *args, **kwargs):
         '''
         Retrieve and save object to local DB
