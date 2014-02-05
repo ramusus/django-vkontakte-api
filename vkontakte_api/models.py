@@ -198,6 +198,41 @@ class VkontakteManager(models.Manager):
         return instances
 
 
+class VkontakteTimelineManager(VkontakteManager):
+    '''
+    Manager class, child of VkontakteManager for fetching objects with arguments `after`, `before`
+    '''
+    @transaction.commit_on_success
+    def fetch(self, *args, **kwargs):
+        '''
+        Retrieve and save object to local DB
+        Return queryset with respect to parameters:
+         * 'after' - excluding all items before.
+         * 'before' - excluding all items after.
+        '''
+        after = kwargs.pop('after', None)
+        before = kwargs.pop('before', None)
+
+        result = self.get(*args, **kwargs)
+        if isinstance(result, list):
+            instances = self.model.objects.none()
+            for instance in result:
+
+                if after and after > getattr(instance, 'date'):
+                    break
+
+                if before and before < getattr(instance, 'date'):
+                    continue
+
+                instance = self.get_or_create_from_instance(instance)
+                instances |= instance.__class__.objects.filter(pk=instance.pk)
+            return instances
+        elif isinstance(result, QuerySet):
+            return result
+        else:
+            return self.get_or_create_from_instance(result)
+
+
 class VkontakteModel(models.Model):
     class Meta:
         abstract = True
