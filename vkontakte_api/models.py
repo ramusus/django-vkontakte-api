@@ -273,14 +273,12 @@ class VkontakteModel(models.Model):
                     value = int(value)
                 except:
                     pass
-
-            if isinstance(field, models.FloatField) and value:
+            elif isinstance(field, models.FloatField) and value:
                 try:
                     value = float(value)
                 except:
                     pass
-
-            if isinstance(field, models.CharField):
+            elif isinstance(field, models.CharField):
                 if isinstance(value, bool):
                     value = ''
                 else:
@@ -289,15 +287,14 @@ class VkontakteModel(models.Model):
                     except:
                         pass
 
-            if isinstance(field, models.DateTimeField):
+            elif isinstance(field, models.DateTimeField):
                 try:
                     value = int(value)
                     assert value > 0
                     value = datetime.fromtimestamp(value)
                 except:
                     value = None
-
-            if isinstance(field, models.DateField):
+            elif isinstance(field, models.DateField):
                 try:
                     value = date(int(value[0:4]), int(value[5:7]), int(value[8:10]))
                 except:
