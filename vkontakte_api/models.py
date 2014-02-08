@@ -273,25 +273,37 @@ class VkontakteModel(models.Model):
                     value = int(value)
                 except:
                     pass
+
             if isinstance(field, models.FloatField) and value:
                 try:
                     value = float(value)
                 except:
                     pass
-            elif isinstance(field, models.DateTimeField):
+
+            if isinstance(field, models.CharField):
+                if isinstance(value, bool):
+                    value = ''
+                else:
+                    try:
+                        value = unicode(value)
+                    except:
+                        pass
+
+            if isinstance(field, models.DateTimeField):
                 try:
                     value = int(value)
                     assert value > 0
                     value = datetime.fromtimestamp(value)
                 except:
                     value = None
-            elif isinstance(field, models.DateField):
+
+            if isinstance(field, models.DateField):
                 try:
                     value = date(int(value[0:4]), int(value[5:7]), int(value[8:10]))
                 except:
                     value = None
 
-            elif isinstance(field, models.OneToOneField) and value:
+            if isinstance(field, models.OneToOneField) and value:
                 rel_class = field.rel.to
                 if isinstance(value, int):
                     try:
