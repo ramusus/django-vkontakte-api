@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from abc import abstractmethod
-from django.db import models, transaction
+from django.db import models, transaction, IntegrityError
 from django.core.exceptions import ImproperlyConfigured
 from django.db.models.fields import FieldDoesNotExist
 from django.db.models.query import QuerySet
@@ -347,6 +347,22 @@ class VkontakteIDModel(VkontakteModel):
     @property
     def slug(self):
         return self.slug_prefix + str(self.remote_id)
+
+    def save(self, *args, **kwargs):
+        '''
+        In case of IntegrityError, caused by `remote_id` field make substitution and save again
+        '''
+        try:
+            return super(VkontakteIDModel, self).save(*args, **kwargs)
+        except IntegrityError, e:
+            try:
+                assert self.remote_id and 'remote_id' in e.message
+                instance = type(self).objects.get(remote_id=self.remote_id)
+                self._substitute(instance)
+                kwargs['force_insert'] = False
+                return super(VkontakteIDModel, self).save(*args, **kwargs)
+            except (AssertionError, type(self).DoesNotExist):
+                raise e
 
 
 class VkontaktePKModel(VkontakteModel):
