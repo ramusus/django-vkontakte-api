@@ -202,6 +202,12 @@ class VkontakteTimelineManager(VkontakteManager):
     '''
     Manager class, child of VkontakteManager for fetching objects with arguments `after`, `before`
     '''
+    timeline_cut_fieldname = 'date'
+    timeline_force_ordering = False
+
+    def get_timeline_date(self, instance):
+        return getattr(instance, self.timeline_cut_fieldname)
+
     @transaction.commit_on_success
     def fetch(self, *args, **kwargs):
         '''
@@ -216,13 +222,21 @@ class VkontakteTimelineManager(VkontakteManager):
         result = self.get(*args, **kwargs)
         if isinstance(result, list):
             instances = self.model.objects.none()
+
+            if self.timeline_force_ordering:
+                result.sort(key=self.get_timeline_date, reverse=True)
+
             for instance in result:
 
-                if after and after > getattr(instance, 'date'):
-                    break
+                timeline_date = self.get_timeline_date(instance)
 
-                if before and before < getattr(instance, 'date'):
-                    continue
+                if timeline_date and isinstance(timeline_date, datetime):
+
+                    if after and after > timeline_date:
+                        break
+
+                    if before and before < timeline_date:
+                        continue
 
                 instance = self.get_or_create_from_instance(instance)
                 instances |= instance.__class__.objects.filter(pk=instance.pk)

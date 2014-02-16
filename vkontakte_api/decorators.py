@@ -40,7 +40,7 @@ def fetch_all(func, return_all=None, kwargs_offset='offset', kwargs_count='count
 
             instances = func(self, *args, **kwargs)
             instances_all |= instances
-            instances_count = len(instances)
+            instances_count = instances.count()
 
             if instances_count > 0 and (not default_count or instances_count == kwargs.get(kwargs_count, default_count)):
                 # TODO: make protection somehow from endless loop in case
