@@ -206,7 +206,7 @@ class VkontakteTimelineManager(VkontakteManager):
     timeline_force_ordering = False
 
     def get_timeline_date(self, instance):
-        return getattr(instance, self.timeline_cut_fieldname)
+        return getattr(instance, self.timeline_cut_fieldname, None)
 
     @transaction.commit_on_success
     def fetch(self, *args, **kwargs):
