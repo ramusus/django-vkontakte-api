@@ -35,12 +35,21 @@ def fetch_all(func, return_all=None, kwargs_offset='offset', kwargs_count='count
     """
     def wrapper(self, all=False, instances_all=None, *args, **kwargs):
         if all:
-            if not instances_all:
-                instances_all = QuerySet().none()
 
             instances = func(self, *args, **kwargs)
-            instances_all |= instances
-            instances_count = instances.count()
+
+            if isinstance(instances, QuerySet):
+                if not instances_all:
+                    instances_all = QuerySet().none()
+                instances_all |= instances
+                instances_count = instances.count()
+            elif isinstance(instances, list):
+                if not instances_all:
+                    instances_all = []
+                instances_all += instances
+                instances_count = len(instances)
+            else:
+                raise ValueError("Wrong type of response from func %s. It should be QuerySet or list, not a %s" % (func, type(instances)))
 
             if instances_count > 0 and (not default_count or instances_count == kwargs.get(kwargs_count, default_count)):
                 # TODO: make protection somehow from endless loop in case
