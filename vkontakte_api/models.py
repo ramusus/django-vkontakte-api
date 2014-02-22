@@ -279,7 +279,7 @@ class VkontakteModel(models.Model):
             try:
                 field = self._meta.get_field(key)
             except FieldDoesNotExist:
-                log.debug('Field with name "%s" doesn\'t exist in the model %s' % (key, type(self)))
+                log.debug('Field with name "%s" doesn\'t exists in the model %s' % (key, self.__class__.__name__))
                 continue
 
             if isinstance(field, models.IntegerField) and value:
@@ -334,7 +334,7 @@ class VkontakteModel(models.Model):
         """
         Refresh current model with remote data
         """
-        objects = type(self).remote.fetch(**self.refresh_kwargs)
+        objects = self.__class__.remote.fetch(**self.refresh_kwargs)
         if len(objects) == 1:
             self.__dict__.update(objects[0].__dict__)
         else:
@@ -345,11 +345,11 @@ class VkontakteModel(models.Model):
 
     @property
     def refresh_kwargs(self):
-        raise NotImplementedError("Property %s.refresh_kwargs should be specified" % type(self))
+        raise NotImplementedError("Property %s.refresh_kwargs should be specified" % self.__class__.__name__)
 
     @property
     def slug(self):
-        raise NotImplementedError("Property %s.slug should be specified" % type(self))
+        raise NotImplementedError("Property %s.slug should be specified" % self.__class__.__name__)
 
 
 class VkontakteIDModel(VkontakteModel):
@@ -370,12 +370,12 @@ class VkontakteIDModel(VkontakteModel):
             return super(VkontakteIDModel, self).save(*args, **kwargs)
         except IntegrityError, e:
             try:
-                assert self.remote_id and 'remote_id' in e.message
-                instance = type(self).objects.get(remote_id=self.remote_id)
+                assert self.remote_id and 'remote_id' in unicode(e)
+                instance = self.__class__.objects.get(remote_id=self.remote_id)
                 self._substitute(instance)
                 kwargs['force_insert'] = False
                 return super(VkontakteIDModel, self).save(*args, **kwargs)
-            except (AssertionError, type(self).DoesNotExist):
+            except (AssertionError, self.__class__.DoesNotExist):
                 raise e
 
 
@@ -435,7 +435,7 @@ class VkontakteCRUDModel(models.Model):
         super(VkontakteCRUDModel, self).save(*args, **kwargs)
 
     def create_remote(self, **kwargs):
-        response = type(self).remote.api_call(
+        response = self.__class__.remote.api_call(
                 method='create', **self.prepare_create_params(**kwargs))
         self.remote_id = self.parse_remote_id_from_response(response)
         log.info("Remote object %s was created successfully with ID %s" \
@@ -444,7 +444,7 @@ class VkontakteCRUDModel(models.Model):
     def update_remote(self, **kwargs):
         params = self.prepare_update_params_distinct(**kwargs)
         # sometimes response contains 1, sometimes remote_id
-        response = type(self).remote.api_call(method='update', **params)
+        response = self.__class__.remote.api_call(method='update', **params)
         if not response:
             message = "Error response '%s' while saving remote %s with ID %s and data '%s'" \
                     % (response, self._meta.object_name, self.remote_id, params)
@@ -460,7 +460,7 @@ class VkontakteCRUDModel(models.Model):
         commit_remote = commit_remote if commit_remote is not None else self._commit_remote
         if commit_remote and self.remote_id:
             params = self.prepare_delete_params()
-            success = type(self).remote.api_call(method='delete', **params)
+            success = self.__class__.remote.api_call(method='delete', **params)
             model = self._meta.object_name
             if not success:
                 message = "Error response '%s' while deleting remote %s with ID %s" % (success, model, self.remote_id)
@@ -478,7 +478,7 @@ class VkontakteCRUDModel(models.Model):
         commit_remote = commit_remote if commit_remote is not None else self._commit_remote
         if commit_remote and self.remote_id:
             params = self.prepare_restore_params()
-            success = type(self).remote.api_call(method='restore', **params)
+            success = self.__class__.remote.api_call(method='restore', **params)
             model = self._meta.object_name
             if not success:
                 message = "Error response '%s' while restoring remote %s with ID %s" % (success, model, self.remote_id)
@@ -491,14 +491,14 @@ class VkontakteCRUDModel(models.Model):
 
     @property
     def fields_changed(self):
-        old = type(self).objects.get(remote_id=self.remote_id)
+        old = self.__class__.objects.get(remote_id=self.remote_id)
         return old.__dict__ != self.__dict__
 
     def prepare_update_params_distinct(self, **kwargs):
         '''
         Return dict with distinct set of fields for update
         '''
-        old = type(self).objects.get(remote_id=self.remote_id)
+        old = self.__class__.objects.get(remote_id=self.remote_id)
         fields_new = self.prepare_update_params(**kwargs).items()
         fields_old = old.prepare_update_params(**kwargs).items()
         fields = dict(set(fields_new).difference(set(fields_old)))
