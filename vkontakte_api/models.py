@@ -14,7 +14,7 @@ import re
 log = logging.getLogger('vkontakte_api')
 
 COMMIT_REMOTE = getattr(settings, 'VKONTAKTE_API_COMMIT_REMOTE', True)
-
+MASTER_DATABASE = getattr(settings, 'VKONTAKTE_API_MASTER_DATABASE', 'default')
 
 class VkontakteDeniedAccessError(Exception):
     pass
@@ -95,7 +95,7 @@ class VkontakteManager(models.Manager):
 
         if remote_pk_dict:
             try:
-                old_instance = self.model.objects.get(**remote_pk_dict)
+                old_instance = self.model.objects.using(MASTER_DATABASE).get(**remote_pk_dict)
                 instance._substitute(old_instance)
                 instance.save()
             except self.model.DoesNotExist:
