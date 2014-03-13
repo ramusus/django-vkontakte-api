@@ -131,11 +131,7 @@ class VkontakteManager(models.Manager):
         '''
         result = self.get(*args, **kwargs)
         if isinstance(result, list):
-            instances = self.model.objects.none()
-            for instance in result:
-                instance = self.get_or_create_from_instance(instance)
-                instances |= instance.__class__.objects.filter(pk=instance.pk)
-            return instances
+            return self.model.objects.filter(pk__in={self.get_or_create_from_instance(instance).pk for instance in result})
         elif isinstance(result, QuerySet):
             return result
         else:
