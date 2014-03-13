@@ -60,24 +60,18 @@ class VkontakteManager(models.Manager):
             remote_id = int(re.findall(r'^%s(\d+)$' % self.model.slug_prefix, slug)[0])
         except (AssertionError, ValueError, IndexError):
             try:
-                return self.model.objects.get(screen_name=slug)
-            except self.model.DoesNotExist:
-                try:
-                    response = api_call('resolveScreenName', **{'screen_name': slug})
-                except VkontakteError, e:
-                    log.error("Method get_by_slug returned error instead of response. Slug: '%s'. Error: %s" % (slug, e))
-                    return None
-                try:
-                    assert self.model._meta.module_name == response['type']
-                    remote_id = int(response['object_id'])
-                except TypeError:
-                    log.error("Method get_by_slug returned response in strange format: %s. Slug is '%s'" % (response, slug))
-                    return None
-                except ValueError:
-                    return None
-                except AssertionError:
-                    log.error("Method get_by_slug returned instance with wrong type '%s', not '%s'. Slug is '%s'" % (response['type'], self.model._meta.module_name, slug))
-                    return None
+                response = api_call('resolveScreenName', **{'screen_name': slug})
+                assert self.model.resolve_screen_name_type == response['type']
+                remote_id = int(response['object_id'])
+            except VkontakteError, e:
+                log.error("Method get_by_slug returned error instead of response. Slug: '%s'. Error: %s" % (slug, e))
+                return None
+            except (KeyError, ValueError), e:
+                log.error("Method get_by_slug returned response in strange format: %s. Slug is '%s'" % (response, slug))
+                return None
+            except AssertionError:
+                log.error("Method get_by_slug returned instance with wrong type '%s', not '%s'. Slug is '%s'" % (response['type'], self.model.resolve_screen_name_type, slug))
+                return None
 
         try:
             object = self.model.objects.get(remote_id=remote_id)
@@ -247,6 +241,7 @@ class VkontakteModel(models.Model):
     class Meta:
         abstract = True
 
+    resolve_screen_name_type = ''
     remote_pk_field = 'id'
     remote_pk_local_field = 'remote_id'
     methods_access_tag = ''
