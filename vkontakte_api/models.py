@@ -45,7 +45,7 @@ class VkontakteManager(models.Manager):
         '''
         Return vkonakte object by url
         '''
-        m = re.findall(r'(?:http://)?vk.com/(.+)/?', url)
+        m = re.findall(r'^(?:https?://)?vk.com/([^/]+)/?$', url)
         if not len(m):
             raise ValueError("Url should be started with http://vk.com/")
 
@@ -66,7 +66,7 @@ class VkontakteManager(models.Manager):
             except VkontakteError, e:
                 log.error("Method get_by_slug returned error instead of response. Slug: '%s'. Error: %s" % (slug, e))
                 return None
-            except (KeyError, ValueError), e:
+            except (KeyError, TypeError, ValueError), e:
                 log.error("Method get_by_slug returned response in strange format: %s. Slug is '%s'" % (response, slug))
                 return None
             except AssertionError:

@@ -12,7 +12,7 @@ class User(VkontaktePKModel):
     Test model should be on top level, otherwise table will not be created
     '''
     screen_name = models.CharField(u'Короткое имя группы', max_length=50, unique=True)
-    slug_prefix = ''
+    slug_prefix = 'id'
 
     remote = VkontakteManager()
 
@@ -62,6 +62,11 @@ class VkontakteApiTest(TestCase):
 
         response = api_call('resolveScreenName', screen_name='durov')
         self.assertEqual(response, {u'object_id': 1, u'type': u'user'})
+
+    def test_get_by_url(self):
+
+        instance = User.remote.get_by_url('https://vk.com/id1/')
+        self.assertEqual(instance.screen_name, 'id1')
 
     def test_get_by_slug(self):
 
