@@ -11,6 +11,7 @@ class User(VkontaktePKModel):
     '''
     Test model should be on top level, otherwise table will not be created
     '''
+    resolve_screen_name_type = 'user'
     screen_name = models.CharField(u'Короткое имя группы', max_length=50, unique=True)
     slug_prefix = 'id'
 
