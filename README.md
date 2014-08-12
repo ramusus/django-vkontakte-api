@@ -1,7 +1,7 @@
 Django Vkontakte API
 ====================
 
-[![PyPI version](https://badge.fury.io/py/django-vkontakte-api.png)](http://badge.fury.io/py/django-vkontakte-api) [![Build Status](https://travis-ci.org/ramusus/django-vkontakte-api.png?branch=master)](https://travis-ci.org/ramusus/django-vkontakte-api) [![Coverage Status](https://coveralls.io/repos/ramusus/django-vkontakte-api/badge.png?branch=master)](https://coveralls.io/r/ramusus/django-vkontakte-api) [![Bitdeli Badge](https://d2weczhvl823v0.cloudfront.net/ramusus/django-vkontakte-api/trend.png)](https://bitdeli.com/free "Bitdeli Badge")
+[![PyPI version](https://badge.fury.io/py/django-vkontakte-api.png)](http://badge.fury.io/py/django-vkontakte-api) [![Build Status](https://travis-ci.org/ramusus/django-vkontakte-api.png?branch=master)](https://travis-ci.org/ramusus/django-vkontakte-api) [![Coverage Status](https://coveralls.io/repos/ramusus/django-vkontakte-api/badge.png?branch=master)](https://coveralls.io/r/ramusus/django-vkontakte-api)
 
 Приложение позволяет взаимодействовать с объектами Вконтакте API используя стандартные модели Django
 

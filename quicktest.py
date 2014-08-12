@@ -114,7 +114,7 @@ class QuickDjangoTest(object):
                 del settings_test['INSTALLED_APPS']
         except ImportError:
             settings_test = {}
-            INSTALLED_APPS = []
+            INSTALLED_APPS = tuple()
 
         return INSTALLED_APPS, settings_test
 

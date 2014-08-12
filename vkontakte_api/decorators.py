@@ -33,7 +33,7 @@ def fetch_all(func, return_all=None, kwargs_offset='offset', kwargs_count='count
         def fetch_something(self, ..., *kwargs):
         ....
     """
-    def wrapper(self, all=False, instances_all=None, *args, **kwargs):
+    def wrapper(self, all=False, instances_all=None, extra_calls=0, *args, **kwargs):
         if all:
 
             instances = func(self, *args, **kwargs)
@@ -51,11 +51,17 @@ def fetch_all(func, return_all=None, kwargs_offset='offset', kwargs_count='count
             else:
                 raise ValueError("Wrong type of response from func %s. It should be QuerySet or list, not a %s" % (func, type(instances)))
 
+#            print kwargs.get(kwargs_offset, 0), instances_count, extra_calls
             if instances_count > 0 and (not default_count or instances_count == kwargs.get(kwargs_count, default_count)):
                 # TODO: make protection somehow from endless loop in case
                 # where `kwargs_offset` argument is not make any sense for `func`
                 kwargs[kwargs_offset] = kwargs.get(kwargs_offset, 0) + instances_count
                 return wrapper(self, all=all, instances_all=instances_all, *args, **kwargs)
+            # попытка решить проблему получения репостов поста https://vk.com/wall-36948301_23383?w=shares%2Fwall-36948301_23383
+            elif extra_calls < 3:
+                kwargs[kwargs_offset] = kwargs.get(kwargs_offset, 0) + 1
+                extra_calls += 1
+                return wrapper(self, all=all, instances_all=instances_all, extra_calls=extra_calls, *args, **kwargs)
 
             if return_all:
                 return return_all(self, *args, **kwargs)
