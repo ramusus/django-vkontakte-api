@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 from abc import abstractmethod
-from django.db import models, transaction, IntegrityError
 from django.core.exceptions import ImproperlyConfigured
+from django.db import models, transaction, IntegrityError
 from django.db.models.fields import FieldDoesNotExist
 from django.db.models.query import QuerySet
+from django.utils.timezone import utc
 from django.conf import settings
 from datetime import datetime, date
 from vkontakte_api.utils import api_call, VkontakteError
@@ -198,7 +199,7 @@ class VkontakteTimelineManager(VkontakteManager):
     timeline_force_ordering = False
 
     def get_timeline_date(self, instance):
-        return getattr(instance, self.timeline_cut_fieldname, None)
+        return getattr(instance, self.timeline_cut_fieldname, datetime(1970, 1, 1).replace(tzinfo=utc))
 
     @transaction.commit_on_success
     def fetch(self, *args, **kwargs):
@@ -298,11 +299,12 @@ class VkontakteModel(models.Model):
                 try:
                     value = int(value)
                     assert value > 0
-                    value = datetime.fromtimestamp(value)
+                    value = datetime.utcfromtimestamp(value).replace(tzinfo=utc)
                 except:
                     value = None
             elif isinstance(field, models.DateField):
                 try:
+                    # TODO: define tzinfo here
                     value = date(int(value[0:4]), int(value[5:7]), int(value[8:10]))
                 except:
                     value = None
