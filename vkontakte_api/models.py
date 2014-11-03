@@ -69,15 +69,15 @@ class VkontakteManager(models.Manager):
                 log.error("Method get_by_slug returned error instead of response. Slug: '%s'. Error: %s" % (slug, e))
                 return None
 
-        if response['type'] not in self.model.resolve_screen_name_types:
-            raise WrongResponseType("Method get_by_slug returned instance with wrong type '%s', not '%s'. Slug is '%s'" % (response['type'], self.model.resolve_screen_name_types, slug))
+            if response['type'] not in self.model.resolve_screen_name_types:
+                raise WrongResponseType("Method get_by_slug returned instance with wrong type '%s', not '%s'. Slug is '%s'" % (response['type'], self.model.resolve_screen_name_types, slug))
 
-        try:
-            remote_id = int(response['object_id'])
-        except (KeyError, TypeError, ValueError), e:
-            # TODO: raise error
-            log.error("Method get_by_slug returned response in strange format: %s. Slug is '%s'" % (response, slug))
-            return None
+            try:
+                remote_id = int(response['object_id'])
+            except (KeyError, TypeError, ValueError), e:
+                # TODO: raise error
+                log.error("Method get_by_slug returned response in strange format: %s. Slug is '%s'" % (response, slug))
+                return None
 
         try:
             object = self.model.objects.get(remote_id=remote_id)
