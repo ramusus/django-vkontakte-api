@@ -29,6 +29,9 @@ class VkontakteParseError(Exception):
     pass
 
 
+class WrongResponseType(Exception):
+    pass
+
 class VkontakteManager(models.Manager):
     '''
     Vkontakte Ads API Manager for RESTful CRUD operations
@@ -62,17 +65,19 @@ class VkontakteManager(models.Manager):
         except (AssertionError, ValueError, IndexError):
             try:
                 response = api_call('resolveScreenName', **{'screen_name': slug})
-                assert self.model.resolve_screen_name_type == response['type']
-                remote_id = int(response['object_id'])
             except VkontakteError, e:
                 log.error("Method get_by_slug returned error instead of response. Slug: '%s'. Error: %s" % (slug, e))
                 return None
-            except (KeyError, TypeError, ValueError), e:
-                log.error("Method get_by_slug returned response in strange format: %s. Slug is '%s'" % (response, slug))
-                return None
-            except AssertionError:
-                log.error("Method get_by_slug returned instance with wrong type '%s', not '%s'. Slug is '%s'" % (response['type'], self.model.resolve_screen_name_type, slug))
-                return None
+
+        if response['type'] not in self.model.resolve_screen_name_types:
+            raise WrongResponseType("Method get_by_slug returned instance with wrong type '%s', not '%s'. Slug is '%s'" % (response['type'], self.model.resolve_screen_name_types, slug))
+
+        try:
+            remote_id = int(response['object_id'])
+        except (KeyError, TypeError, ValueError), e:
+            # TODO: raise error
+            log.error("Method get_by_slug returned response in strange format: %s. Slug is '%s'" % (response, slug))
+            return None
 
         try:
             object = self.model.objects.get(remote_id=remote_id)
@@ -244,7 +249,7 @@ class VkontakteModel(models.Model):
     class Meta:
         abstract = True
 
-    resolve_screen_name_type = ''
+    resolve_screen_name_types = []
     remote_pk_field = 'id'
     remote_pk_local_field = 'remote_id'
     methods_access_tag = ''
