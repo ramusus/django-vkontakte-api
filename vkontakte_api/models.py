@@ -6,9 +6,10 @@ from django.db.models.fields import FieldDoesNotExist
 from django.db.models.query import QuerySet
 from django.utils.timezone import utc
 from django.conf import settings
-from datetime import datetime, date
+from vkontakte_api.signals import vkontakte_api_post_fetch
 from vkontakte_api.utils import api_call, VkontakteError
 from vkontakte_api import fields
+from datetime import datetime, date
 import logging
 import re
 
@@ -31,6 +32,7 @@ class VkontakteParseError(Exception):
 
 class WrongResponseType(Exception):
     pass
+
 
 class VkontakteManager(models.Manager):
     '''
@@ -105,6 +107,7 @@ class VkontakteManager(models.Manager):
             instance.save()
             log.debug('Fetch and create new object %s without remote pk' % (self.model,))
 
+        vkontakte_api_post_fetch.send(sender=instance.__class__, instance=instance, created=(not old_instance))
         return instance
 
     def get_or_create_from_resource(self, resource):
