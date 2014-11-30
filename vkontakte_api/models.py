@@ -95,6 +95,7 @@ class VkontakteManager(models.Manager):
 
     def get_or_create_from_instance(self, instance):
 
+        old_instance = None
         remote_pk_dict = {}
         for field_name in self.remote_pk:
             remote_pk_dict[field_name] = getattr(instance, field_name)
