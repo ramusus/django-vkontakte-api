@@ -1,22 +1,24 @@
 # -*- coding: utf-8 -*-
 from abc import abstractmethod
+from datetime import datetime, date
+import logging
+import re
+
+from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.db import models, transaction, IntegrityError
 from django.db.models.fields import FieldDoesNotExist
 from django.db.models.query import QuerySet
 from django.utils.timezone import utc
-from django.conf import settings
+from vkontakte_api import fields
 from vkontakte_api.signals import vkontakte_api_post_fetch
 from vkontakte_api.utils import api_call, VkontakteError
-from vkontakte_api import fields
-from datetime import datetime, date
-import logging
-import re
 
 log = logging.getLogger('vkontakte_api')
 
 COMMIT_REMOTE = getattr(settings, 'VKONTAKTE_API_COMMIT_REMOTE', True)
 MASTER_DATABASE = getattr(settings, 'VKONTAKTE_API_MASTER_DATABASE', 'default')
+
 
 class VkontakteDeniedAccessError(Exception):
     pass
@@ -35,9 +37,11 @@ class WrongResponseType(Exception):
 
 
 class VkontakteManager(models.Manager):
+
     '''
     Vkontakte Ads API Manager for RESTful CRUD operations
     '''
+
     def __init__(self, methods=None, remote_pk=None, *args, **kwargs):
         if methods and len(methods.items()) < 1:
             raise ValueError('Argument methods must contains at least 1 specified method')
@@ -51,7 +55,7 @@ class VkontakteManager(models.Manager):
         '''
         Return vkonakte object by url
         '''
-        m = re.findall(r'^(?:https?://)?vk.com/([^/]+)/?$', url)
+        m = re.findall(r'^(?:https?://)?vk.com/([^/\?]+)', url)
         if not len(m):
             raise ValueError("Url should be started with http://vk.com/")
 
@@ -200,6 +204,7 @@ class VkontakteManager(models.Manager):
 
 
 class VkontakteTimelineManager(VkontakteManager):
+
     '''
     Manager class, child of VkontakteManager for fetching objects with arguments `after`, `before`
     '''
@@ -249,9 +254,9 @@ class VkontakteTimelineManager(VkontakteManager):
 
 
 class VkontakteModel(models.Model):
-    class Meta:
-        abstract = True
 
+    # TODO: capitalize names of model settings
+    # or use here some app for defining config of models
     resolve_screen_name_types = []
     remote_pk_field = 'id'
     remote_pk_local_field = 'remote_id'
@@ -261,6 +266,9 @@ class VkontakteModel(models.Model):
     fetched = models.DateTimeField(u'Обновлено', null=True, blank=True, db_index=True)
 
     objects = models.Manager()
+
+    class Meta:
+        abstract = True
 
     def _substitute(self, old_instance):
         '''
@@ -323,7 +331,8 @@ class VkontakteModel(models.Model):
                     try:
                         rel_instance = rel_class.objects.get(pk=value)
                     except rel_class.DoesNotExist:
-                        raise VkontakteParseError("OneToOne relation of model %s (PK=%s) does not exist" % (rel_class.__name__, value))
+                        raise VkontakteParseError("OneToOne relation of model %s (PK=%s) does not exist" %
+                                                  (rel_class.__name__, value))
                 else:
                     rel_instance = rel_class().parse(dict(value))
                 value = rel_instance
@@ -356,14 +365,11 @@ class VkontakteModel(models.Model):
 
 
 class VkontakteIDModel(VkontakteModel):
-    class Meta:
-        abstract = True
 
     remote_id = models.BigIntegerField(u'ID', help_text=u'Уникальный идентификатор', unique=True)
 
-    @property
-    def slug(self):
-        return self.slug_prefix + str(self.remote_id)
+    class Meta:
+        abstract = True
 
     def save(self, *args, **kwargs):
         '''
@@ -381,12 +387,17 @@ class VkontakteIDModel(VkontakteModel):
             except (AssertionError, self.__class__.DoesNotExist):
                 raise e
 
+    @property
+    def slug(self):
+        return self.slug_prefix + str(self.remote_id)
+
 
 class VkontaktePKModel(VkontakteModel):
-    class Meta:
-        abstract = True
 
     remote_id = models.BigIntegerField(u'ID', help_text=u'Уникальный идентификатор', primary_key=True)
+
+    class Meta:
+        abstract = True
 
     @property
     def slug(self):
@@ -402,8 +413,6 @@ class VkontakteCRUDManager(models.Manager):
 
 
 class VkontakteCRUDModel(models.Model):
-    class Meta:
-        abstract = True
 
     # list of required number of fields for updating model remotely
     fields_required_for_update = []
@@ -412,6 +421,9 @@ class VkontakteCRUDModel(models.Model):
     _commit_remote = True
 
     archived = models.BooleanField(u'В архиве', default=False)
+
+    class Meta:
+        abstract = True
 
     def __init__(self, *args, **kwargs):
         self._commit_remote = kwargs.pop('commit_remote', self._commit_remote)
@@ -439,10 +451,10 @@ class VkontakteCRUDModel(models.Model):
 
     def create_remote(self, **kwargs):
         response = self.__class__.remote.api_call(
-                method='create', **self.prepare_create_params(**kwargs))
+            method='create', **self.prepare_create_params(**kwargs))
         self.remote_id = self.parse_remote_id_from_response(response)
-        log.info("Remote object %s was created successfully with ID %s" \
-                % (self._meta.object_name, self.remote_id))
+        log.info("Remote object %s was created successfully with ID %s"
+                 % (self._meta.object_name, self.remote_id))
 
     def update_remote(self, **kwargs):
         params = self.prepare_update_params_distinct(**kwargs)
@@ -450,11 +462,11 @@ class VkontakteCRUDModel(models.Model):
         response = self.__class__.remote.api_call(method='update', **params)
         if not response:
             message = "Error response '%s' while saving remote %s with ID %s and data '%s'" \
-                    % (response, self._meta.object_name, self.remote_id, params)
+                % (response, self._meta.object_name, self.remote_id, params)
             log.error(message)
             raise VkontakteContentError(message)
-        log.info("Remote object %s with ID=%s was updated with fields '%s' successfully" \
-                % (self._meta.object_name, self.remote_id, params))
+        log.info("Remote object %s with ID=%s was updated with fields '%s' successfully"
+                 % (self._meta.object_name, self.remote_id, params))
 
     def delete_remote(self, commit_remote=None):
         '''
@@ -505,7 +517,7 @@ class VkontakteCRUDModel(models.Model):
         fields_new = self.prepare_update_params(**kwargs).items()
         fields_old = old.prepare_update_params(**kwargs).items()
         fields = dict(set(fields_new).difference(set(fields_old)))
-        fields.update(dict([(k,v) for k,v in fields_new if k in self.fields_required_for_update]))
+        fields.update(dict([(k, v) for k, v in fields_new if k in self.fields_required_for_update]))
         return fields
 
     @abstractmethod

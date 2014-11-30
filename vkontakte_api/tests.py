@@ -7,6 +7,7 @@ from models import VkontakteIDModel, VkontaktePKModel, VkontakteManager
 from utils import api_call, VkontakteError
 import mock
 
+
 class User(VkontaktePKModel):
     '''
     Test model should be on top level, otherwise table will not be created
@@ -17,11 +18,12 @@ class User(VkontaktePKModel):
 
     remote = VkontakteManager()
 
+
 class UserID(VkontakteIDModel):
     screen_name = models.CharField(u'Короткое имя группы', max_length=50, unique=True)
 
+
 class VkontakteApiTest(TestCase):
-#    fixtures = ['oauth_tokens.usercredentials.json',]
 
     def test_save_user_integrity_error(self):
 
