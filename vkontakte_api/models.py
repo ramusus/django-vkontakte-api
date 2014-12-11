@@ -1,19 +1,18 @@
 # -*- coding: utf-8 -*-
 from abc import abstractmethod
 from datetime import datetime, date
-import logging
-import re
-
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.db import models, transaction, IntegrityError
 from django.db.models.fields import FieldDoesNotExist
 from django.db.models.query import QuerySet
 from django.utils.timezone import utc
+import logging
+import re
+
 from vkontakte_api import fields
 from vkontakte_api.signals import vkontakte_api_post_fetch
 from vkontakte_api.utils import api_call, VkontakteError
-
 log = logging.getLogger('vkontakte_api')
 
 COMMIT_REMOTE = getattr(settings, 'VKONTAKTE_API_COMMIT_REMOTE', True)
@@ -156,6 +155,10 @@ class VkontakteManager(models.Manager):
         extra_fields['fetched'] = datetime.now()
 
         response = self.api_call(*args, **kwargs)
+
+        version = float(kwargs.get('v', 0))
+        if version >= 4.93:
+            response = response['items']
 
         return self.parse_response(response, extra_fields)
 
