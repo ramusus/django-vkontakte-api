@@ -6,6 +6,7 @@ from django.core.exceptions import ImproperlyConfigured
 from django.db import models, transaction, IntegrityError
 from django.db.models.fields import FieldDoesNotExist
 from django.db.models.query import QuerySet
+from django.utils import timezone
 from django.utils.timezone import utc
 import logging
 import re
@@ -75,13 +76,15 @@ class VkontakteManager(models.Manager):
                 return None
 
             if response['type'] not in self.model.resolve_screen_name_types:
-                raise WrongResponseType("Method get_by_slug returned instance with wrong type '%s', not '%s'. Slug is '%s'" % (response['type'], self.model.resolve_screen_name_types, slug))
+                raise WrongResponseType("Method get_by_slug returned instance with wrong type '%s', not '%s'. Slug is '%s'" % (
+                    response['type'], self.model.resolve_screen_name_types, slug))
 
             try:
                 remote_id = int(response['object_id'])
             except (KeyError, TypeError, ValueError), e:
                 # TODO: raise error
-                log.error("Method get_by_slug returned response in strange format: %s. Slug is '%s'" % (response, slug))
+                log.error("Method get_by_slug returned response in strange format: %s. Slug is '%s'" %
+                          (response, slug))
                 return None
 
         try:
@@ -152,7 +155,7 @@ class VkontakteManager(models.Manager):
         TODO: rename everywhere extra_fields to _extra_fields
         '''
         extra_fields = kwargs.pop('extra_fields', {})
-        extra_fields['fetched'] = datetime.now()
+        extra_fields['fetched'] = timezone.now()
 
         response = self.api_call(*args, **kwargs)
 
@@ -354,7 +357,8 @@ class VkontakteModel(models.Model):
         if len(objects) == 1:
             self.__dict__.update(objects[0].__dict__)
         else:
-            raise VkontakteContentError("Remote server returned more objects, than expected - %d instead of one. Object details: %s, request details: %s" % (len(objects), self.__dict__, kwargs))
+            raise VkontakteContentError(
+                "Remote server returned more objects, than expected - %d instead of one. Object details: %s, request details: %s" % (len(objects), self.__dict__, kwargs))
 
     def get_url(self):
         return 'http://vk.com/%s' % self.slug
