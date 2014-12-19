@@ -1,22 +1,19 @@
 # -*- coding: utf-8 -*-
 from abc import abstractmethod
 from datetime import datetime, date
-import logging
-import re
-
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.db import models, transaction, IntegrityError
 from django.db.models.fields import FieldDoesNotExist
 from django.db.models.query import QuerySet
 from django.utils import timezone
+import logging
+import re
 
 from . import fields
 from .exceptions import VkontakteDeniedAccessError, VkontakteContentError, VkontakteParseError, WrongResponseType
 from .signals import vkontakte_api_post_fetch
 from .utils import api_call, VkontakteError
-
-
 log = logging.getLogger('vkontakte_api')
 
 COMMIT_REMOTE = getattr(settings, 'VKONTAKTE_API_COMMIT_REMOTE', True)
@@ -125,7 +122,9 @@ class VkontakteManager(models.Manager):
         if isinstance(method, tuple):
             method, version = method
 
-        kwargs['v'] = float(kwargs.pop('v', version))
+        version = kwargs.pop('v', version)
+        if version:
+            kwargs['v'] = float(version)
 
         if self.model.methods_namespace:
             method = self.model.methods_namespace + '.' + method
