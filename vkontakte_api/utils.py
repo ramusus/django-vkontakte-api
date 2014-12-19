@@ -57,12 +57,16 @@ def api_call(method, recursion_count=0, methods_access_tag=None, used_access_tok
     '''
     Call API using access_token
     '''
+    if used_access_tokens is None:
+        used_access_tokens = []
+
     try:
         vk = get_api(tag=methods_access_tag, used_access_tokens=used_access_tokens)
     except NoActiveTokens, e:
         if used_access_tokens:
             # we should wait 1 sec and repeat with clear attribute used_access_tokens
-            log.warning("Waiting 1 sec, because all active tokens are used, method: %s, recursion count: %d" % (method, recursion_count))
+            log.warning("Waiting 1 sec, because all active tokens are used, method: %s, recursion count: %d" %
+                        (method, recursion_count))
             time.sleep(1)
             return api_call(method, recursion_count + 1, methods_access_tag, used_access_tokens=None, **kwargs)
         else:
@@ -83,13 +87,15 @@ def api_call(method, recursion_count=0, methods_access_tag=None, used_access_tok
             # try access_token of another user
             log.info("Vkontakte error 'Too many requests per second' on method: %s, \
                 recursion count: %d" % (method, recursion_count))
-            used_access_tokens = [vk.token] + (used_access_tokens or [])
+            used_access_tokens += [vk.token]
             return api_call(method, recursion_count + 1, methods_access_tag, used_access_tokens=used_access_tokens, **kwargs)
         elif e.code == 9:
             log.warning("Vkontakte flood control registered while executing method %s with params %s, \
                 recursion count: %d" % (method, kwargs, recursion_count))
             time.sleep(1)
-            return api_call(method, recursion_count + 1, methods_access_tag, **kwargs)
+            used_access_tokens += [vk.token]
+#            print used_access_tokens
+            return api_call(method, recursion_count + 1, methods_access_tag, used_access_tokens=used_access_tokens, **kwargs)
         elif e.code == 10:
             log.warning("Internal server error: Database problems, try later. Error registered while executing \
                 method %s with params %s, recursion count: %d" % (method, kwargs, recursion_count))
@@ -110,7 +116,8 @@ def api_call(method, recursion_count=0, methods_access_tag=None, used_access_tok
             log.error("Unhandled vkontakte error raised: %s", e)
             raise e
     except SSLError, e:
-        log.error("SSLError: '%s' registered while executing method %s with params %s, recursion count: %d" % (e, method, kwargs, recursion_count))
+        log.error("SSLError: '%s' registered while executing method %s with params %s, recursion count: %d" %
+                  (e, method, kwargs, recursion_count))
         time.sleep(1)
         return api_call(method, recursion_count + 1, methods_access_tag, **kwargs)
     except Exception, e:
