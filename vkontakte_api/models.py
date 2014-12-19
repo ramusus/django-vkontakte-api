@@ -1,39 +1,26 @@
 # -*- coding: utf-8 -*-
 from abc import abstractmethod
 from datetime import datetime, date
+import logging
+import re
+
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.db import models, transaction, IntegrityError
 from django.db.models.fields import FieldDoesNotExist
 from django.db.models.query import QuerySet
 from django.utils import timezone
-from django.utils.timezone import utc
-import logging
-import re
 
-from vkontakte_api import fields
-from vkontakte_api.signals import vkontakte_api_post_fetch
-from vkontakte_api.utils import api_call, VkontakteError
+from . import fields
+from .exceptions import VkontakteDeniedAccessError, VkontakteContentError, VkontakteParseError, WrongResponseType
+from .signals import vkontakte_api_post_fetch
+from .utils import api_call, VkontakteError
+
+
 log = logging.getLogger('vkontakte_api')
 
 COMMIT_REMOTE = getattr(settings, 'VKONTAKTE_API_COMMIT_REMOTE', True)
 MASTER_DATABASE = getattr(settings, 'VKONTAKTE_API_MASTER_DATABASE', 'default')
-
-
-class VkontakteDeniedAccessError(Exception):
-    pass
-
-
-class VkontakteContentError(Exception):
-    pass
-
-
-class VkontakteParseError(Exception):
-    pass
-
-
-class WrongResponseType(Exception):
-    pass
 
 
 class VkontakteManager(models.Manager):
@@ -221,7 +208,7 @@ class VkontakteTimelineManager(VkontakteManager):
     timeline_force_ordering = False
 
     def get_timeline_date(self, instance):
-        return getattr(instance, self.timeline_cut_fieldname, datetime(1970, 1, 1).replace(tzinfo=utc))
+        return getattr(instance, self.timeline_cut_fieldname, datetime(1970, 1, 1).replace(tzinfo=timezone.utc))
 
     @transaction.commit_on_success
     def fetch(self, *args, **kwargs):
@@ -324,7 +311,7 @@ class VkontakteModel(models.Model):
                 try:
                     value = int(value)
                     assert value > 0
-                    value = datetime.utcfromtimestamp(value).replace(tzinfo=utc)
+                    value = datetime.utcfromtimestamp(value).replace(tzinfo=timezone.utc)
                 except:
                     value = None
             elif isinstance(field, models.DateField):

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
-from django.utils.functional import wraps
 from django.db.models.query import QuerySet
+from django.utils.functional import wraps
+
 
 def opt_arguments(func):
     '''
@@ -18,8 +19,9 @@ def opt_arguments(func):
             return meta_func
     return meta_wrapper
 
+
 @opt_arguments
-def fetch_all(func, return_all=None, kwargs_offset='offset', kwargs_count='count', default_count=None):
+def fetch_all(func, return_all=None, kwargs_offset='offset', kwargs_count='count', default_count=None, max_extra_calls=0):
     """
     Class method decorator for fetching all items. Add parameter `all=False` for decored method.
     If `all` is True, method runs as many times as it returns any results.
@@ -33,6 +35,7 @@ def fetch_all(func, return_all=None, kwargs_offset='offset', kwargs_count='count
         def fetch_something(self, ..., *kwargs):
         ....
     """
+
     def wrapper(self, all=False, instances_all=None, extra_calls=0, *args, **kwargs):
         if all:
 
@@ -49,16 +52,16 @@ def fetch_all(func, return_all=None, kwargs_offset='offset', kwargs_count='count
                 instances_all += instances
                 instances_count = len(instances)
             else:
-                raise ValueError("Wrong type of response from func %s. It should be QuerySet or list, not a %s" % (func, type(instances)))
+                raise ValueError(
+                    "Wrong type of response from func %s. It should be QuerySet or list, not a %s" % (func, type(instances)))
 
-#            print kwargs.get(kwargs_offset, 0), instances_count, extra_calls
             if instances_count > 0 and (not default_count or instances_count == kwargs.get(kwargs_count, default_count)):
                 # TODO: make protection somehow from endless loop in case
                 # where `kwargs_offset` argument is not make any sense for `func`
                 kwargs[kwargs_offset] = kwargs.get(kwargs_offset, 0) + instances_count
                 return wrapper(self, all=all, instances_all=instances_all, *args, **kwargs)
             # попытка решить проблему получения репостов поста https://vk.com/wall-36948301_23383?w=shares%2Fwall-36948301_23383
-            elif extra_calls < 3:
+            elif extra_calls < max_extra_calls - 1:
                 kwargs[kwargs_offset] = kwargs.get(kwargs_offset, 0) + 1
                 extra_calls += 1
                 return wrapper(self, all=all, instances_all=instances_all, extra_calls=extra_calls, *args, **kwargs)
@@ -71,6 +74,7 @@ def fetch_all(func, return_all=None, kwargs_offset='offset', kwargs_count='count
             return func(self, *args, **kwargs)
 
     return wraps(func)(wrapper)
+
 
 def opt_generator(func):
     """
@@ -99,8 +103,11 @@ def opt_generator(func):
 From here http://stackoverflow.com/questions/815110/is-there-a-decorator-to-simply-cache-function-return-values
 With modifications for properties
 '''
+
+
 def memoize(function):
     memo = {}
+
     def wrapper(*args, **kwargs):
         key = args
         if key in memo:
