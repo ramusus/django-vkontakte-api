@@ -132,7 +132,8 @@ class VkontakteManager(models.Manager):
         response = api_call(method, **kwargs)
 
         if version >= 4.93:
-            response = response['items']
+            if isinstance(response, dict) and response.has_key('items'):
+                response = response['items']
 
         return response
 
