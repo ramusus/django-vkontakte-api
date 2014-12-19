@@ -586,3 +586,40 @@ class VkontakteCRUDModel(models.Model):
             return False
         else:
             return True
+
+
+class CountOffsetManagerMixin(VkontakteManager):
+
+    def fetch(self, count=100, offset=0, **kwargs):
+        count = int(count)
+        if count > 100:
+            raise ValueError("Attribute 'count' can not be more than 100")
+
+        # count количество элементов, которое необходимо получить.
+        if count:
+            kwargs['count'] = count
+
+        # offset смещение, необходимое для выборки определенного подмножества. По умолчанию — 0.
+        # положительное число
+        offset = int(offset)
+        if offset:
+            kwargs['offset'] = offset
+
+        return super(CountOffsetManagerMixin, self).fetch(**kwargs)
+
+
+class AfterBeforeManagerMixin(VkontakteTimelineManager):
+
+    def fetch(self, before=None, after=None, **kwargs):
+        if before and not after:
+            raise ValueError("Attribute `before` should be specified with attribute `after`")
+        if before and before < after:
+            raise ValueError("Attribute `before` should be later, than attribute `after`")
+
+        # special parameters
+        if after:
+            kwargs['after'] = after
+        if before:
+            kwargs['before'] = before
+
+        return super(AfterBeforeManagerMixin, self).fetch(**kwargs)
