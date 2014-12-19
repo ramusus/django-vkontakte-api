@@ -76,13 +76,15 @@ class VkontakteManager(models.Manager):
                 return None
 
             if response['type'] not in self.model.resolve_screen_name_types:
-                raise WrongResponseType("Method get_by_slug returned instance with wrong type '%s', not '%s'. Slug is '%s'" % (response['type'], self.model.resolve_screen_name_types, slug))
+                raise WrongResponseType("Method get_by_slug returned instance with wrong type '%s', not '%s'. Slug is '%s'" % (
+                    response['type'], self.model.resolve_screen_name_types, slug))
 
             try:
                 remote_id = int(response['object_id'])
             except (KeyError, TypeError, ValueError), e:
                 # TODO: raise error
-                log.error("Method get_by_slug returned response in strange format: %s. Slug is '%s'" % (response, slug))
+                log.error("Method get_by_slug returned response in strange format: %s. Slug is '%s'" %
+                          (response, slug))
                 return None
 
         try:
@@ -141,7 +143,9 @@ class VkontakteManager(models.Manager):
         if isinstance(result, list):
             # python 2.6 compatibility
             return self.model.objects.filter(pk__in=set([self.get_or_create_from_instance(instance).pk for instance in result]))
-#            return self.model.objects.filter(pk__in={self.get_or_create_from_instance(instance).pk for instance in result})
+#         return
+#         self.model.objects.filter(pk__in={self.get_or_create_from_instance(instance).pk
+#         for instance in result})
         elif isinstance(result, QuerySet):
             return result
         else:
@@ -351,7 +355,8 @@ class VkontakteModel(models.Model):
         if len(objects) == 1:
             self.__dict__.update(objects[0].__dict__)
         else:
-            raise VkontakteContentError("Remote server returned more objects, than expected - %d instead of one. Object details: %s, request details: %s" % (len(objects), self.__dict__, kwargs))
+            raise VkontakteContentError(
+                "Remote server returned more objects, than expected - %d instead of one. Object details: %s, request details: %s" % (len(objects), self.__dict__, kwargs))
 
     def get_url(self):
         return 'http://vk.com/%s' % self.slug
