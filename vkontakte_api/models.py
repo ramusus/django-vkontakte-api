@@ -29,12 +29,13 @@ class VkontakteManager(models.Manager):
     Vkontakte Ads API Manager for RESTful CRUD operations
     '''
 
-    def __init__(self, methods=None, remote_pk=None, *args, **kwargs):
+    def __init__(self, methods=None, remote_pk=None, version=None, *args, **kwargs):
         if methods and len(methods.items()) < 1:
             raise ValueError('Argument methods must contains at least 1 specified method')
 
         self.methods = methods or {}
         self.remote_pk = remote_pk or tuple()
+        self.version = version
 
         super(VkontakteManager, self).__init__(*args, **kwargs)
 
@@ -115,11 +116,26 @@ class VkontakteManager(models.Manager):
         if self.model.methods_access_tag:
             kwargs['methods_access_tag'] = self.model.methods_access_tag
 
+        # Priority importance of defining version:
+        # 1. per call (kwargs)
+        # 2. per method (self.methods[method][1])
+        # 3. per manager (self.version)
+        version = self.version
         method = self.methods[method]
+        if isinstance(method, tuple):
+            method, version = method
+
+        kwargs['v'] = float(kwargs.pop('v', version))
+
         if self.model.methods_namespace:
             method = self.model.methods_namespace + '.' + method
 
-        return api_call(method, **kwargs)
+        response = api_call(method, **kwargs)
+
+        if version >= 4.93:
+            response = response['items']
+
+        return response
 
     @transaction.commit_on_success
     def fetch(self, *args, **kwargs):
@@ -147,10 +163,6 @@ class VkontakteManager(models.Manager):
         extra_fields['fetched'] = timezone.now()
 
         response = self.api_call(*args, **kwargs)
-
-        version = float(kwargs.get('v', 0))
-        if version >= 4.93:
-            response = response['items']
 
         return self.parse_response(response, extra_fields)
 

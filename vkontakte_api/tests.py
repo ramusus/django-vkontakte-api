@@ -1,14 +1,16 @@
 # -*- coding: utf-8 -*-
-from django.test import TestCase
 from django.db import models, IntegrityError
-from decorators import opt_generator
-from parser import VkontakteParser
-from models import VkontakteIDModel, VkontaktePKModel, VkontakteManager
-from utils import api_call, VkontakteError
+from django.test import TestCase
 import mock
+
+from .decorators import opt_generator
+from .models import VkontakteIDModel, VkontaktePKModel, VkontakteManager
+from .parser import VkontakteParser
+from .utils import api_call, VkontakteError
 
 
 class User(VkontaktePKModel):
+
     '''
     Test model should be on top level, otherwise table will not be created
     '''
@@ -16,7 +18,10 @@ class User(VkontaktePKModel):
     screen_name = models.CharField(u'Короткое имя группы', max_length=50, unique=True)
     slug_prefix = 'id'
 
-    remote = VkontakteManager()
+    remote = VkontakteManager(remote_pk=('remote_id',), version=5.27, methods={
+        'get': 'users.get',
+        'friends': ('friends.get', 5.02)
+    })
 
 
 class UserID(VkontakteIDModel):
@@ -24,6 +29,25 @@ class UserID(VkontakteIDModel):
 
 
 class VkontakteApiTest(TestCase):
+
+    @mock.patch('vkontakte_api.models.api_call', side_effect=lambda *a, **kw: {'items': []})
+    def test_api_call_versions(self, method):
+
+        User.remote.api_call('get', v=5.01)
+        self.assertEqual(method.call_args_list[0][0][0], 'users.get')
+        self.assertEqual(method.call_args_list[0][1]['v'], 5.01)
+
+        User.remote.api_call('get')
+        self.assertEqual(method.call_args_list[1][0][0], 'users.get')
+        self.assertEqual(method.call_args_list[1][1]['v'], 5.27)
+
+        User.remote.api_call('friends')
+        self.assertEqual(method.call_args_list[2][0][0], 'friends.get')
+        self.assertEqual(method.call_args_list[2][1]['v'], 5.02)
+
+        User.remote.api_call('friends', v=5.03)
+        self.assertEqual(method.call_args_list[3][0][0], 'friends.get')
+        self.assertEqual(method.call_args_list[3][1]['v'], 5.03)
 
     def test_save_user_integrity_error(self):
 
@@ -78,7 +102,7 @@ class VkontakteApiTest(TestCase):
 
     @mock.patch('time.sleep')
     def test_requests_limit_per_sec(self, sleep, *args, **kwargs):
-        for i in range(0,30):
+        for i in range(0, 30):
             api_call('resolveScreenName', screen_name='durov')
 
 #         self.assertTrue(sleep.called)
@@ -87,6 +111,7 @@ class VkontakteApiTest(TestCase):
     def test_generator_decorator(self):
 
         class GeneratorMethodClass(object):
+
             @opt_generator
             def some_method(self, total, *args, **kwargs):
                 for count in range(total):
