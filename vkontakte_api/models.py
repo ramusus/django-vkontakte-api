@@ -2,6 +2,8 @@
 from abc import abstractmethod
 from datetime import datetime, date
 from django.conf import settings
+from django.contrib.contenttypes import generic
+from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ImproperlyConfigured
 from django.db import models, transaction, IntegrityError
 from django.db.models.fields import FieldDoesNotExist
@@ -624,3 +626,36 @@ class AfterBeforeManagerMixin(VkontakteTimelineManager):
             kwargs['before'] = before
 
         return super(AfterBeforeManagerMixin, self).fetch(**kwargs)
+
+
+class OwnerableModelMixin(models.Model):
+    owner_content_type = models.ForeignKey(ContentType, null=True, related_name='content_type_owners_%(class)ss')
+    owner_id = models.BigIntegerField(null=True, db_index=True)
+    owner = generic.GenericForeignKey('owner_content_type', 'owner_id')
+
+    class Meta:
+        abstract = True
+
+    def _get_or_create_group_or_user(self, remote_id):
+        if remote_id > 0:
+            Model = ContentType.objects.get(app_label='vkontakte_users', model='user').model_class()
+        elif remote_id < 0:
+            Model = ContentType.objects.get(app_label='vkontakte_groups', model='group').model_class()
+        else:
+            raise ValueError("remote_id shouldn't be equal to 0")
+
+        object, _created = Model.objects.get_or_create(remote_id=abs(remote_id))
+
+        return object
+
+    @property
+    def remote_owner_id(self):
+        if self.owner_content_type.model == 'user':
+            return self.owner_id
+        else:
+            return -1 * self.owner_id
+
+    def parse(self, response):
+        self.owner = self._get_or_create_group_or_user(response.pop('owner_id'))
+
+        super(OwnerableModelMixin, self).parse(response)
