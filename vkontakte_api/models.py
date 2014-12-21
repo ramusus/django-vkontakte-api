@@ -125,15 +125,14 @@ class VkontakteManager(models.Manager):
         if isinstance(method, tuple):
             method, version = method
 
-        kwargs['v'] = float(kwargs.pop('v', version))
+        version = kwargs.pop('v', version)
+        if version:
+            kwargs['v'] = float(version)
 
         if self.model.methods_namespace:
             method = self.model.methods_namespace + '.' + method
 
         response = api_call(method, **kwargs)
-
-        if version >= 4.93:
-            response = response['items']
 
         return response
 
