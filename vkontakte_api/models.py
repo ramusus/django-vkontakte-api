@@ -12,10 +12,9 @@ from django.db.models.query import QuerySet
 from django.utils import timezone
 
 from . import fields
+from .api import api_call, VkontakteError
 from .exceptions import VkontakteDeniedAccessError, VkontakteContentError, VkontakteParseError, WrongResponseType
 from .signals import vkontakte_api_post_fetch
-from .utils import api_call, VkontakteError
-
 
 log = logging.getLogger('vkontakte_api')
 

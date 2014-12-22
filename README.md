@@ -38,7 +38,7 @@ Django Vkontakte API
 
 ### Запрос API
 
-    >>> from vkontakte_api.utils import api_call
+    >>> from vkontakte_api.api import api_call
     >>> api_call('resolveScreenName', **{'screen_name': 'durov'})
     {u'object_id': 1, u'type': u'user'}
     >>> api_call('users.get', **{'user_ids': 'durov'})
