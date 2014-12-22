@@ -20,6 +20,7 @@ setup(
         'django-oauth-tokens>=0.4.5',
         'vkontakte',
         'simplejson',
+        'bs4',
     ],
     classifiers=[
         'Development Status :: 4 - Beta',
