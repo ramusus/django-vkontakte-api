@@ -1,16 +1,21 @@
 # -*- coding: utf-8 -*-
-from django.conf import settings
-from datetime import datetime, timedelta
-from BeautifulSoup import BeautifulSoup
-import simplejson as json
-import requests
+from datetime import datetime, timedelta, date
 import re
+
+from bs4 import BeautifulSoup
+from django.conf import settings
+from django.utils import timezone
+import requests
+import simplejson as json
+
 
 def isalambda(v):
     return isinstance(v, type(lambda: None)) and v.__name__ == '<lambda>'
 
+
 class VkontakteParseError(Exception):
     pass
+
 
 class VkontakteParser(object):
 
@@ -48,7 +53,7 @@ class VkontakteParser(object):
         return BeautifulSoup(self.html)
 
     def request(self, *args, **kwargs):
-        kwargs['headers'] = {'Accept-Language':'ru-RU,ru;q=0.8'}
+        kwargs['headers'] = {'Accept-Language': 'ru-RU,ru;q=0.8'}
 
         args = list(args)
         if 'http' not in args[0]:
@@ -67,10 +72,10 @@ class VkontakteParser(object):
 
     def parse_date(self, date_text):
         date_words = date_text.split(' ')
-        months = (u'',u'янв',u'фев',u'мар',u'апр',u'мая',u'июн',u'июл',u'авг',u'сен',u'окт',u'ноя',u'дек')
-        hours = (u'',u'час',u'два',u'три',u'четыре',u'пять')
-        minutes = (u'',u'минуту',u'две',u'три',u'четыре',u'пять')
-        now = datetime.now()
+        months = (u'', u'янв', u'фев', u'мар', u'апр', u'мая', u'июн', u'июл', u'авг', u'сен', u'окт', u'ноя', u'дек')
+        hours = (u'', u'час', u'два', u'три', u'четыре', u'пять')
+        minutes = (u'', u'минуту', u'две', u'три', u'четыре', u'пять')
+        now = date.today()
         if u'сегодня в' in date_text:
             h, m = self.parse_time(date_words[-1])
             return datetime(now.year, now.month, now.day, h, m)
@@ -101,7 +106,7 @@ class VkontakteParser(object):
                 # 15 мая в 10:12
                 h, m = self.parse_time(date_words[-1])
                 value = datetime(now.year, months.index(month), int(date_words[0]), h, m)
-                return value if value < now else datetime(now.year-1, months.index(month), int(date_words[0]), h, m)
+                return value if value < now else datetime(now.year - 1, months.index(month), int(date_words[0]), h, m)
 
             elif len(date_words) == 3:
                 # 31 дек 2011

@@ -3,10 +3,10 @@ from django.db import models, IntegrityError
 from django.test import TestCase
 import mock
 
+from .api import api_call, VkontakteError, VkontakteApi
 from .decorators import opt_generator
 from .models import VkontakteIDModel, VkontaktePKModel, VkontakteManager
 from .parser import VkontakteParser
-from .utils import api_call, VkontakteError
 
 
 class User(VkontaktePKModel):
@@ -29,6 +29,10 @@ class UserID(VkontakteIDModel):
 
 
 class VkontakteApiTest(TestCase):
+
+    def test_api_instance_singleton(self):
+
+        self.assertEqual(id(VkontakteApi()), id(VkontakteApi()))
 
     @mock.patch('vkontakte_api.models.api_call', side_effect=lambda *a, **kw: {'items': []})
     def test_api_call_versions(self, method):
@@ -100,11 +104,11 @@ class VkontakteApiTest(TestCase):
         instance = User.remote.get_by_slug('durov')
         self.assertEqual(instance.remote_id, 1)
 
-    @mock.patch('time.sleep')
-    def test_requests_limit_per_sec(self, sleep, *args, **kwargs):
-        for i in range(0, 30):
-            api_call('resolveScreenName', screen_name='durov')
-
+#     @mock.patch('time.sleep')
+#     def test_requests_limit_per_sec(self, sleep, *args, **kwargs):
+#         for i in range(0, 30):
+#             api_call('resolveScreenName', screen_name='durov')
+#
 #         self.assertTrue(sleep.called)
 #         self.assertTrue(sleep.call_count >= 1)
 

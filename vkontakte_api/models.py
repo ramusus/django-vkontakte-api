@@ -11,9 +11,10 @@ import logging
 import re
 
 from . import fields
+from .api import api_call, VkontakteError
 from .exceptions import VkontakteDeniedAccessError, VkontakteContentError, VkontakteParseError, WrongResponseType
 from .signals import vkontakte_api_post_fetch
-from .utils import api_call, VkontakteError
+
 log = logging.getLogger('vkontakte_api')
 
 COMMIT_REMOTE = getattr(settings, 'VKONTAKTE_API_COMMIT_REMOTE', True)
