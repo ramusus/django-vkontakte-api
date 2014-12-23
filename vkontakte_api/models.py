@@ -130,11 +130,18 @@ class VkontakteManager(models.Manager):
         if version:
             kwargs['v'] = float(version)
 
-        if self.methods_namespace:
-            method = self.model.methods_namespace + '.' + method
+        methods_namespace = None
+
+        if kwargs.has_key('methods_namespace'):
+            methods_namespace = kwargs.pop('methods_namespace')
+        elif self.methods_namespace:
+            methods_namespace = self.methods_namespace
         elif self.model.methods_namespace:
             # TODO: Add deprication warning
-            method = self.model.methods_namespace + '.' + method
+            methods_namespace = self.model.methods_namespace
+
+        if methods_namespace:
+            method = methods_namespace + '.' + method
 
         response = api_call(method, **kwargs)
 
