@@ -21,14 +21,18 @@ MASTER_DATABASE = getattr(settings, 'VKONTAKTE_API_MASTER_DATABASE', 'default')
 
 
 class VkontakteManager(models.Manager):
+    methods_namespace = None
 
     '''
     Vkontakte Ads API Manager for RESTful CRUD operations
     '''
 
-    def __init__(self, methods=None, remote_pk=None, version=None, *args, **kwargs):
+    def __init__(self, methods_namespace=None, methods=None, remote_pk=None, version=None, *args, **kwargs):
         if methods and len(methods.items()) < 1:
             raise ValueError('Argument methods must contains at least 1 specified method')
+
+        if methods_namespace:
+            self.methods_namespace = methods_namespace
 
         self.methods = methods or {}
         self.remote_pk = remote_pk or tuple()
@@ -126,7 +130,10 @@ class VkontakteManager(models.Manager):
         if version:
             kwargs['v'] = float(version)
 
-        if self.model.methods_namespace:
+        if self.methods_namespace:
+            method = self.model.methods_namespace + '.' + method
+        elif self.model.methods_namespace:
+            # TODO: Add deprication warning
             method = self.model.methods_namespace + '.' + method
 
         response = api_call(method, **kwargs)
