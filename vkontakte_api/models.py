@@ -113,7 +113,7 @@ class VkontakteManager(models.Manager):
 
         return self.get_or_create_from_instance(instance)
 
-    def api_call(self, method='get', **kwargs):
+    def api_call(self, method='get', methods_namespace=None, **kwargs):
         if self.model.methods_access_tag:
             kwargs['methods_access_tag'] = self.model.methods_access_tag
 
@@ -130,10 +130,8 @@ class VkontakteManager(models.Manager):
         if version:
             kwargs['v'] = float(version)
 
-        methods_namespace = None
-
-        if kwargs.has_key('methods_namespace'):
-            methods_namespace = kwargs.pop('methods_namespace')
+        if methods_namespace:
+            pass
         elif self.methods_namespace:
             methods_namespace = self.methods_namespace
         elif self.model.methods_namespace:
