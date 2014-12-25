@@ -63,7 +63,7 @@ class OwnerableModelMixin(models.Model):
         return object
 
     @property
-    def remote_owner_id(self):
+    def owner_remote_id(self):
         if self.owner_content_type.model == 'user':
             return self.owner_id
         else:
