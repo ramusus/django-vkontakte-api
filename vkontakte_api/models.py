@@ -126,18 +126,18 @@ class VkontakteManager(models.Manager):
         method = self.methods[method]
         if isinstance(method, tuple):
             method, version = method
-
         version = kwargs.pop('v', version)
         if version:
             kwargs['v'] = float(version)
 
+        # methods namespace
         if methods_namespace:
             pass
         elif self.methods_namespace:
             methods_namespace = self.methods_namespace
         elif self.model.methods_namespace:
-            # TODO: Add deprication warning
             methods_namespace = self.model.methods_namespace
+            log.warning("Property Model.methods_namespace is deprecated, use Manager.methods_namespace instead")
 
         if methods_namespace:
             method = methods_namespace + '.' + method
