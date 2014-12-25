@@ -1,20 +1,20 @@
 # -*- coding: utf-8 -*-
 from abc import abstractmethod
 from datetime import datetime, date
+import logging
+import re
+
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.db import models, transaction, IntegrityError
 from django.db.models.fields import FieldDoesNotExist
 from django.db.models.query import QuerySet
 from django.utils import timezone
-import logging
-import re
 
 from . import fields
 from .api import api_call, VkontakteError
 from .exceptions import VkontakteDeniedAccessError, VkontakteContentError, VkontakteParseError, WrongResponseType
 from .signals import vkontakte_api_post_fetch
-
 log = logging.getLogger('vkontakte_api')
 
 COMMIT_REMOTE = getattr(settings, 'VKONTAKTE_API_COMMIT_REMOTE', True)
