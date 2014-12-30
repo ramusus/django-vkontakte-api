@@ -1,6 +1,4 @@
 # -*- coding: utf-8 -*-
-import time
-
 from django.conf import settings
 from oauth_tokens.api import ApiAbstractBase, Singleton
 from oauth_tokens.models import AccessToken
@@ -44,19 +42,21 @@ class VkontakteApi(ApiAbstractBase):
     def handle_error_code_9(self, e, *args, **kwargs):
         self.logger.warning("Vkontakte flood control registered while executing method %s with params %s, \
             recursion count: %d" % (self.method, kwargs, self.recursion_count))
-        time.sleep(1)
         self.used_access_tokens += [self.api.token]
-        return self.repeat_call(*args, **kwargs)
+        return self.sleep_repeat_call(*args, **kwargs)
 
     def handle_error_code_10(self, e, *args, **kwargs):
         self.logger.warning("Internal server error: Database problems, try later. Error registered while executing \
             method %s with params %s, recursion count: %d" % (self.method, kwargs, self.recursion_count))
-        time.sleep(1)
-        return self.repeat_call(*args, **kwargs)
+        return self.sleep_repeat_call(*args, **kwargs)
+
+    def handle_error_code_500(self, e, *args, **kwargs):
+        # strange HTTP error appears sometimes
+        return self.sleep_repeat_call(*args, **kwargs)
 
     def handle_error_code_501(self, e, *args, **kwargs):
         # strange HTTP error appears sometimes
-        return self.repeat_call(*args, **kwargs)
+        return self.sleep_repeat_call(*args, **kwargs)
 
 
 def api_call(*args, **kwargs):
