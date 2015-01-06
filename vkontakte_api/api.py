@@ -50,6 +50,18 @@ class VkontakteApi(ApiAbstractBase):
             method %s with params %s, recursion count: %d" % (self.method, kwargs, self.recursion_count))
         return self.sleep_repeat_call(*args, **kwargs)
 
+#     def handle_error_code_17(self, e, *args, **kwargs):
+# Validation required: please open redirect_uri in browser
+# TODO: test it
+#         auth_request = AccessToken.objects.get_token('vkontakte').auth_request
+#
+#         response = auth_request.session.get(e.redirect_uri)
+#         method, action, data = auth_request.get_form_data_from_content(response.content)
+#         data['code'] = auth_request.additional
+#         response = getattr(auth_request.session, method)(url=action, headers=self.auth_request.headers, data=data)
+#
+#         return self.sleep_repeat_call(*args, **kwargs)
+
     def handle_error_code_500(self, e, *args, **kwargs):
         # strange HTTP error appears sometimes
         return self.sleep_repeat_call(*args, **kwargs)
