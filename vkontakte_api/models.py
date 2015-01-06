@@ -123,9 +123,13 @@ class VkontakteManager(models.Manager):
         # 2. per method (self.methods[method][1])
         # 3. per manager (self.version)
         version = self.version
-        method = self.methods[method]
+
+        if method in self.methods:
+            method = self.methods[method]
+
         if isinstance(method, tuple):
             method, version = method
+
         version = kwargs.pop('v', version)
         if version:
             kwargs['v'] = float(version)
@@ -193,7 +197,8 @@ class VkontakteManager(models.Manager):
         instance = self.model()
         # important to do it before calling parse method
         if extra_fields:
-            instance.__dict__.update(extra_fields)
+            for k, v in extra_fields.items():
+                setattr(instance, k, v)
         instance.parse(resource)
 
         return instance
@@ -386,7 +391,18 @@ class VkontakteModel(models.Model):
         raise NotImplementedError("Property %s.slug should be specified" % self.__class__.__name__)
 
 
-class VkontakteIDModel(VkontakteModel):
+class RemoteIdModelMixin:
+
+    @property
+    def slug(self):
+        return self.slug_prefix + str(self.remote_id)
+
+    @property
+    def remote_id_short(self):
+        return str(self.remote_id).split('_')[-1]
+
+
+class VkontakteIDModel(RemoteIdModelMixin, VkontakteModel):
 
     remote_id = models.BigIntegerField(u'ID', help_text=u'Уникальный идентификатор', unique=True)
 
@@ -409,21 +425,21 @@ class VkontakteIDModel(VkontakteModel):
             except (AssertionError, self.__class__.DoesNotExist):
                 raise e
 
-    @property
-    def slug(self):
-        return self.slug_prefix + str(self.remote_id)
+
+class VkontakteIDStrModel(RemoteIdModelMixin, VkontakteModel):
+
+    remote_id = models.CharField(u'ID', max_length=20, help_text=u'Уникальный идентификатор', unique=True)
+
+    class Meta:
+        abstract = True
 
 
-class VkontaktePKModel(VkontakteModel):
+class VkontaktePKModel(RemoteIdModelMixin, VkontakteModel):
 
     remote_id = models.BigIntegerField(u'ID', help_text=u'Уникальный идентификатор', primary_key=True)
 
     class Meta:
         abstract = True
-
-    @property
-    def slug(self):
-        return self.slug_prefix + str(self.remote_id)
 
 
 class VkontakteCRUDManager(models.Manager):
@@ -472,23 +488,26 @@ class VkontakteCRUDModel(models.Model):
         super(VkontakteCRUDModel, self).save(*args, **kwargs)
 
     def create_remote(self, **kwargs):
-        response = self.__class__.remote.api_call(
-            method='create', **self.prepare_create_params(**kwargs))
+        params = self.prepare_create_params(**kwargs)
+        if 'method' not in params:
+            params['method'] = 'create'
+        response = self.__class__.remote.api_call(**params)
         self.remote_id = self.parse_remote_id_from_response(response)
-        log.info("Remote object %s was created successfully with ID %s"
-                 % (self._meta.object_name, self.remote_id))
+        log.info("Remote object %s was created successfully with ID %s" % (self._meta.object_name, self.remote_id))
 
     def update_remote(self, **kwargs):
         params = self.prepare_update_params_distinct(**kwargs)
+        if 'method' not in params:
+            params['method'] = 'update'
         # sometimes response contains 1, sometimes remote_id
-        response = self.__class__.remote.api_call(method='update', **params)
+        response = self.__class__.remote.api_call(**params)
         if not response:
-            message = "Error response '%s' while saving remote %s with ID %s and data '%s'" \
-                % (response, self._meta.object_name, self.remote_id, params)
+            message = "Error response '%s' while saving remote %s with ID %s and data '%s'" % (
+                response, self._meta.object_name, self.remote_id, params)
             log.error(message)
             raise VkontakteContentError(message)
-        log.info("Remote object %s with ID=%s was updated with fields '%s' successfully"
-                 % (self._meta.object_name, self.remote_id, params))
+        log.info("Remote object %s with ID=%s was updated with fields '%s' successfully" %
+                 (self._meta.object_name, self.remote_id, params))
 
     def delete_remote(self, commit_remote=None):
         '''
@@ -497,7 +516,9 @@ class VkontakteCRUDModel(models.Model):
         commit_remote = commit_remote if commit_remote is not None else self._commit_remote
         if commit_remote and self.remote_id:
             params = self.prepare_delete_params()
-            success = self.__class__.remote.api_call(method='delete', **params)
+            if 'method' not in params:
+                params['method'] = 'delete'
+            success = self.__class__.remote.api_call(**params)
             model = self._meta.object_name
             if not success:
                 message = "Error response '%s' while deleting remote %s with ID %s" % (success, model, self.remote_id)
@@ -515,7 +536,9 @@ class VkontakteCRUDModel(models.Model):
         commit_remote = commit_remote if commit_remote is not None else self._commit_remote
         if commit_remote and self.remote_id:
             params = self.prepare_restore_params()
-            success = self.__class__.remote.api_call(method='restore', **params)
+            if 'method' not in params:
+                params['method'] = 'restore'
+            success = self.__class__.remote.api_call(**params)
             model = self._meta.object_name
             if not success:
                 message = "Error response '%s' while restoring remote %s with ID %s" % (success, model, self.remote_id)
