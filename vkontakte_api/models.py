@@ -1,15 +1,14 @@
 # -*- coding: utf-8 -*-
 from abc import abstractmethod
 from datetime import datetime, date
-import logging
-import re
-
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.db import models, transaction, IntegrityError
 from django.db.models.fields import FieldDoesNotExist
 from django.db.models.query import QuerySet
 from django.utils import timezone
+import logging
+import re
 
 from . import fields
 from .api import api_call, VkontakteError
@@ -23,6 +22,9 @@ MASTER_DATABASE = getattr(settings, 'VKONTAKTE_API_MASTER_DATABASE', 'default')
 
 class VkontakteManager(models.Manager):
     methods_namespace = None
+    methods = {}
+    remote_pk = ()
+    version = None
 
     '''
     Vkontakte Ads API Manager for RESTful CRUD operations
@@ -35,9 +37,14 @@ class VkontakteManager(models.Manager):
         if methods_namespace:
             self.methods_namespace = methods_namespace
 
-        self.methods = methods or {}
-        self.remote_pk = remote_pk or tuple()
-        self.version = version
+        if methods:
+            self.methods = methods
+
+        if remote_pk:
+            self.remote_pk = remote_pk
+
+        if version:
+            self.version = version
 
         super(VkontakteManager, self).__init__(*args, **kwargs)
 
