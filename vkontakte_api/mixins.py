@@ -7,6 +7,7 @@ from django.db import models, transaction
 from m2m_history.fields import ManyToManyHistoryField
 from vkontakte_users.models import User
 
+from . import fields
 from .models import VkontakteManager, VkontakteTimelineManager
 
 log = logging.getLogger('vkontakte_api')
@@ -164,3 +165,15 @@ class LikableModelMixin(models.Model):
             elif isinstance(value, dict) and 'count' in value:
                 response['likes_count'] = value['count']
         super(LikableModelMixin, self).parse(response)
+
+
+class RawModelMixin(models.Model):
+
+    raw_json = fields.JSONField(default={}, null=True)
+
+    class Meta:
+        abstract = True
+
+    def parse(self, response):
+        self.raw_json = dict(response)
+        super(RawModelMixin, self).parse(response)
