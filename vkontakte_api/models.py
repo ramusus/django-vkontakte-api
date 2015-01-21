@@ -122,7 +122,7 @@ class VkontakteManager(models.Manager):
         return self.get_or_create_from_instance(instance)
 
     def api_call(self, method='get', methods_namespace=None, **kwargs):
-        if self.model.methods_access_tag:
+        if self.model and self.model.methods_access_tag:
             kwargs['methods_access_tag'] = self.model.methods_access_tag
 
         # Priority importance of defining version:
