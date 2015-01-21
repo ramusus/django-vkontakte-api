@@ -97,11 +97,13 @@ class OwnerableModelMixin(models.Model):
 
     @property
     def on_group_wall(self):
-        return self.owner_content_type.model == 'group' and self.owner_content_type.app_label == 'vkontakte_groups'
+        from vkontakte_groups.models import Group
+        return isinstance(self.owner, Group)
 
     @property
     def on_user_wall(self):
-        return self.owner_content_type.model == 'user' and self.owner_content_type.app_label == 'vkontakte_users'
+        from vkontakte_users.models import User
+        return isinstance(self.owner, User)
 
     @property
     def owner_remote_id(self):
@@ -109,12 +111,15 @@ class OwnerableModelMixin(models.Model):
 
     @classmethod
     def get_owner_remote_id(cls, owner):
-        if owner._meta.module_name == 'user':
+        from vkontakte_users.models import User
+        from vkontakte_groups.models import Group
+
+        if isinstance(owner, User):
             return owner.remote_id
-        elif owner._meta.module_name == 'group':
+        elif isinstance(owner, Group):
             return -1 * owner.remote_id
         else:
-            raise ValueError("Field owner should store User of Group")
+            raise ValueError("Field owner should store User of Group, not %s" % owner.__class__)
 
     def parse(self, response):
         if 'owner_id' in response:
