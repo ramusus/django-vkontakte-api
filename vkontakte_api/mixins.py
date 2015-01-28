@@ -1,14 +1,16 @@
 # -*- coding: utf-8 -*-
+import logging
+
 from django.contrib.contenttypes import generic
 from django.contrib.contenttypes.models import ContentType
 from django.db import models, transaction
-import logging
-
 from m2m_history.fields import ManyToManyHistoryField
 from vkontakte_users.models import User
 
 from . import fields
 from .models import VkontakteManager, VkontakteTimelineManager
+
+
 log = logging.getLogger('vkontakte_api')
 
 
@@ -58,6 +60,19 @@ class AfterBeforeManagerMixin(VkontakteTimelineManager):
             kwargs['before'] = before
 
         return super(AfterBeforeManagerMixin, self).fetch(**kwargs)
+
+
+class ActionableModelMixin(models.Model):
+
+    actions_count = models.PositiveIntegerField(null=True, help_text='The number of total actions with this item')
+
+    class Meta:
+        abstract = True
+
+    def save(self, *args, **kwargs):
+        self.actions_count = sum([getattr(self, field, None) or 0
+                                  for field in ['likes_count', 'reposts_count', 'comments_count']])
+        super(ActionableModelMixin, self).save(*args, **kwargs)
 
 
 class AuthorableModelMixin(models.Model):

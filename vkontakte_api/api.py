@@ -68,6 +68,9 @@ class VkontakteApi(ApiAbstractBase):
         data = {'code': auth_request.additional}
         response = getattr(auth_request.session, method)(url=action, headers=auth_request.headers, data=data)
 
+        if 'success' not in response.url:
+            raise Exception("Wrong response. Can not handle VK error 17. response: %s" % response.content)
+
         return self.sleep_repeat_call(*args, **kwargs)
 
     def handle_error_code_500(self, e, *args, **kwargs):
