@@ -2,6 +2,11 @@
 from django.db.models.query import QuerySet
 from django.utils.functional import wraps
 
+try:
+    from django.db.transaction import atomic
+except ImportError:
+    from django.db.transaction import commit_on_success as atomic
+
 
 def opt_arguments(func):
     '''
@@ -21,14 +26,16 @@ def opt_arguments(func):
 
 
 @opt_arguments
-def fetch_all(func, return_all=None, kwargs_offset='offset', kwargs_count='count', default_count=None, max_extra_calls=0):
+def fetch_all(func, return_all=None, always_all=False, kwargs_offset='offset', kwargs_count='count', default_count=None, max_extra_calls=0):
     """
     Class method decorator for fetching all items. Add parameter `all=False` for decored method.
     If `all` is True, method runs as many times as it returns any results.
-    Decorator receive 2 parameters:
+    Decorator receive parameters:
       * callback method `return_all`. It's called with the same parameters
         as decored method after all itmes are fetched.
       * `kwargs_offset` - name of offset parameter among kwargs
+      * `always_all` bool - return all instances in any case of argument `all`
+        of decorated method
     Usage:
 
         @fetch_all(return_all=lambda self,instance,*a,**k: instance.items.all())
@@ -37,7 +44,7 @@ def fetch_all(func, return_all=None, kwargs_offset='offset', kwargs_count='count
     """
 
     def wrapper(self, all=False, instances_all=None, extra_calls=0, *args, **kwargs):
-        if all:
+        if always_all or all:
 
             instances = func(self, *args, **kwargs)
 
