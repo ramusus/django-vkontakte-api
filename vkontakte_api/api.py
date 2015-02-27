@@ -21,8 +21,8 @@ class VkontakteApi(ApiAbstractBase):
     def get_tokens(self, **kwargs):
         return AccessToken.objects.filter_active_tokens_of_provider(self.provider, **kwargs)
 
-    def get_api(self, **kwargs):
-        return API(token=self.get_token(**kwargs))
+    def get_api(self, token):
+        return API(token=token)
 
     def get_api_response(self, *args, **kwargs):
         return self.api.get(self.method, timeout=self.request_timeout, *args, **kwargs)

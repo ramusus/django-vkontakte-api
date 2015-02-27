@@ -17,7 +17,7 @@ setup(
         'django',
         'django-annoying',
         'django-picklefield',
-        'django-oauth-tokens>=0.4.9',
+        'django-oauth-tokens>=0.5.0',
         'vkontakte',
         'simplejson',
         'beautifulsoup4',
