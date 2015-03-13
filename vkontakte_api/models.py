@@ -5,16 +5,16 @@ import logging
 import re
 
 from django.conf import settings
-from django.core.exceptions import ImproperlyConfigured
-from django.db import models, transaction, IntegrityError
+from django.db import models, IntegrityError
 from django.db.models.fields import FieldDoesNotExist
 from django.db.models.query import QuerySet
 from django.utils import timezone
 
 from . import fields
 from .api import api_call, VkontakteError
-from .exceptions import VkontakteDeniedAccessError, VkontakteContentError, VkontakteParseError, WrongResponseType
+from .exceptions import VkontakteContentError, VkontakteParseError, WrongResponseType
 from .signals import vkontakte_api_post_fetch
+from .decorators import atomic
 
 
 log = logging.getLogger('vkontakte_api')
@@ -164,7 +164,7 @@ class VkontakteManager(models.Manager):
 
         return response
 
-    @transaction.commit_on_success
+    @atomic
     def fetch(self, *args, **kwargs):
         '''
         Retrieve and save object to local DB
@@ -250,7 +250,7 @@ class VkontakteTimelineManager(VkontakteManager):
     def get_timeline_date(self, instance):
         return getattr(instance, self.timeline_cut_fieldname, datetime(1970, 1, 1).replace(tzinfo=timezone.utc))
 
-    @transaction.commit_on_success
+    @atomic
     def fetch(self, *args, **kwargs):
         '''
         Retrieve and save object to local DB
@@ -401,7 +401,7 @@ class VkontakteModel(models.Model):
         raise NotImplementedError("Property %s.slug should be specified" % self.__class__.__name__)
 
 
-class RemoteIdModelMixin:
+class RemoteIdModelMixin(object):
 
     @property
     def slug(self):
