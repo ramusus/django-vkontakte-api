@@ -6,6 +6,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.db import models, transaction
 from m2m_history.fields import ManyToManyHistoryField
 from vkontakte_users.models import User
+from vkontakte_api.decorators import memoize
 
 from . import fields
 from .models import VkontakteManager, VkontakteTimelineManager
@@ -14,6 +15,7 @@ from .models import VkontakteManager, VkontakteTimelineManager
 log = logging.getLogger('vkontakte_api')
 
 
+@memoize
 def get_or_create_group_or_user(remote_id):
     if remote_id > 0:
         Model = ContentType.objects.get(app_label='vkontakte_users', model='user').model_class()

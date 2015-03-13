@@ -49,12 +49,12 @@ def fetch_all(func, return_all=None, always_all=False, kwargs_offset='offset', k
             instances = func(self, *args, **kwargs)
 
             if isinstance(instances, QuerySet):
-                if not instances_all:
+                if instances_all is None:
                     instances_all = QuerySet().none()
                 instances_all |= instances
                 instances_count = instances.count()
             elif isinstance(instances, list):
-                if not instances_all:
+                if instances_all is None:
                     instances_all = []
                 instances_all += instances
                 instances_count = len(instances)
