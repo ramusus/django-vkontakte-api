@@ -17,10 +17,13 @@ log = logging.getLogger('vkontakte_api')
 
 @memoize
 def get_or_create_group_or_user(remote_id):
+    from vkontakte_groups.models import Group
+    from vkontakte_users.models import User
+
     if remote_id > 0:
-        Model = ContentType.objects.get(app_label='vkontakte_users', model='user').model_class()
+        Model = User
     elif remote_id < 0:
-        Model = ContentType.objects.get(app_label='vkontakte_groups', model='group').model_class()
+        Model = Group
     else:
         raise ValueError("remote_id shouldn't be equal to 0")
 
