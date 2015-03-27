@@ -331,12 +331,14 @@ class VkontakteModel(models.Model):
             if isinstance(field, models.IntegerField) and value:
                 try:
                     value = int(value)
-                except:
+                except ValueError:
                     pass
+                if isinstance(field, models.PositiveIntegerField):
+                    value = value if value > 0 else 0
             elif isinstance(field, models.FloatField) and value:
                 try:
                     value = float(value)
-                except:
+                except ValueError:
                     pass
             elif isinstance(field, models.CharField):
                 if isinstance(value, bool):
