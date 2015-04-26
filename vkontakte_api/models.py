@@ -427,7 +427,7 @@ class VkontakteIDModel(RemoteIdModelMixin, VkontakteModel):
         '''
         try:
             return super(VkontakteIDModel, self).save(*args, **kwargs)
-        except IntegrityError, e:
+        except IntegrityError as e:
             try:
                 assert self.remote_id and 'remote_id' in unicode(e)
                 instance = self.__class__.objects.get(remote_id=self.remote_id)
@@ -436,6 +436,9 @@ class VkontakteIDModel(RemoteIdModelMixin, VkontakteModel):
                 return super(VkontakteIDModel, self).save(*args, **kwargs)
             except (AssertionError, self.__class__.DoesNotExist):
                 raise e
+        except Exception as e:
+            import sys
+            raise type(e), type(e)(e.message + ' while saving %s' % self.__dict__), sys.exc_info()[2]
 
 
 class VkontakteIDStrModel(RemoteIdModelMixin, VkontakteModel):
