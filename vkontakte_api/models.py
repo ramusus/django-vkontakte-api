@@ -313,6 +313,13 @@ class VkontakteModel(models.Model):
         '''
         self.pk = old_instance.pk
 
+    def save(self, *args, **kwargs):
+        try:
+            return super(VkontakteModel, self).save(*args, **kwargs)
+        except Exception as e:
+            import sys
+            raise type(e), type(e)(e.message + ' while saving %s' % self.__dict__), sys.exc_info()[2]
+
     def parse(self, response):
         '''
         Parse API response and define fields with values
@@ -436,9 +443,6 @@ class VkontakteIDModel(RemoteIdModelMixin, VkontakteModel):
                 return super(VkontakteIDModel, self).save(*args, **kwargs)
             except (AssertionError, self.__class__.DoesNotExist):
                 raise e
-        except Exception as e:
-            import sys
-            raise type(e), type(e)(e.message + ' while saving %s' % self.__dict__), sys.exc_info()[2]
 
 
 class VkontakteIDStrModel(RemoteIdModelMixin, VkontakteModel):
