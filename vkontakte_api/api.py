@@ -27,6 +27,11 @@ class VkontakteApi(ApiAbstractBase):
     def get_api_response(self, *args, **kwargs):
         return self.api.get(self.method, timeout=self.request_timeout, *args, **kwargs)
 
+    def log_and_raise(self, e, *args, **kwargs):
+        self.logger.error("Error '%s'. Method %s, args: %s, kwargs: %s, recursion count: %d" % (
+            e, self.method, args, kwargs, self.recursion_count))
+        raise e
+
     def handle_error_code_5(self, e, *args, **kwargs):
         self.logger.info("Updating vkontakte access token, recursion count: %d" % self.recursion_count)
         self.update_tokens()
