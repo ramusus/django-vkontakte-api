@@ -3,11 +3,11 @@ import logging
 
 from django.contrib.contenttypes import generic
 from django.contrib.contenttypes.models import ContentType
-from django.db import models, transaction
+from django.db import models
 from m2m_history.fields import ManyToManyHistoryField
 from vkontakte_users.models import User
-from vkontakte_api.decorators import memoize
 
+from .decorators import memoize, atomic
 from . import fields
 from .models import VkontakteManager, VkontakteTimelineManager
 
@@ -158,7 +158,7 @@ class LikableModelMixin(models.Model):
     def likes_remote_type(self):
         raise NotImplementedError()
 
-    @transaction.commit_on_success
+    @atomic
     def fetch_likes(self, *args, **kwargs):
 
         kwargs['likes_type'] = self.likes_remote_type
