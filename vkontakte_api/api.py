@@ -12,6 +12,7 @@ class VkontakteApi(ApiAbstractBase):
     __metaclass__ = Singleton
 
     provider = 'vkontakte'
+    provider_social_auth = 'vk-oauth2'
     error_class = VkontakteError
     request_timeout = getattr(settings, 'VKONTAKTE_API_REQUEST_TIMEOUT', 1)
 
@@ -39,8 +40,8 @@ class VkontakteApi(ApiAbstractBase):
 
     def handle_error_code_6(self, e, *args, **kwargs):
         # try access_token by another user
-        self.logger.info(
-            "Vkontakte error 'Too many requests per second' on method: %s, recursion count: %d" % (self.method, self.recursion_count))
+        self.logger.info("Vkontakte error 'Too many requests per second' on method: %s, recursion count: %d" % (
+            self.method, self.recursion_count))
         self.used_access_tokens += [self.api.token]
         return self.repeat_call(*args, **kwargs)
 
