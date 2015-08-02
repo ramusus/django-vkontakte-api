@@ -39,9 +39,10 @@ class VkontakteApiTest(TestCase):
 
         with self.settings(**{'VKONTAKTE_API_ACCESS_TOKEN': None}):
             api = VkontakteApi()
+            api.user = user
             UserSocialAuth.objects.create(user=user, uid=3, provider=api.provider_social_auth,
                                           extra_data='{"access_token": "111111111111", "expires": null, "id": null}')
-            self.assertEqual(api.get_token(user=user), '111111111111')
+            self.assertEqual(api.get_token(), '111111111111')
 
     def test_api_instance_singleton(self):
 
