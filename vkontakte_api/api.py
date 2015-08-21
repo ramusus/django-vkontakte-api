@@ -86,6 +86,10 @@ class VkontakteApi(ApiAbstractBase):
         # strange HTTP error appears sometimes
         return self.sleep_repeat_call(*args, **kwargs)
 
+    def handle_error_code_504(self, e, *args, **kwargs):
+        # strange HTTP error appears sometimes
+        return self.sleep_repeat_call(*args, **kwargs)
+
 
 def api_call(*args, **kwargs):
     api = VkontakteApi()
