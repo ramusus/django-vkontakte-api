@@ -19,9 +19,6 @@ class VkontakteApi(ApiAbstractBase):
     def get_consistent_token(self):
         return getattr(settings, 'VKONTAKTE_API_ACCESS_TOKEN', None)
 
-    def get_tokens(self, **kwargs):
-        return AccessToken.objects.filter_active_tokens_of_provider(self.provider, **kwargs)
-
     def get_api(self, token):
         return API(token=token)
 
