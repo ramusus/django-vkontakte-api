@@ -7,7 +7,6 @@ __all__ = ['api_call', 'VkontakteError']
 
 
 class VkontakteApi(ApiAbstractBase):
-
     __metaclass__ = Singleton
 
     provider = 'vkontakte'

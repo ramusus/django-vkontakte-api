@@ -6,11 +6,11 @@ Django Vkontakte API
 Application for interaction with objects of VK API using Django ORM
 
 Installation
----------
+------------
 
     pip install django-vkontakte-api
 
-Add into `settings.py`:
+Add into `settings.py` lines:
 
     INSTALLED_APPS = (
         ...
@@ -34,9 +34,9 @@ Coverage of API methods
 * [resolveScreenName](http://vk.com/dev/resolveScreenName) – Detects a type of object (e.g., user, community, application) and its ID by screen name.
 
 Usage examples
----------------------
+--------------
 
-### API call
+### Simple API request
 
     >>> from vkontakte_api.api import api_call
     >>> api_call('resolveScreenName', **{'screen_name': 'durov'})
