@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 from django.conf import settings
-from oauth_tokens.api import ApiAbstractBase, Singleton
-from oauth_tokens.models import AccessToken
+from social_api.api import ApiAbstractBase, Singleton
 from vkontakte import VKError as VkontakteError, API
 
 __all__ = ['api_call', 'VkontakteError']
@@ -54,6 +53,8 @@ class VkontakteApi(ApiAbstractBase):
     def handle_error_code_17(self, e, *args, **kwargs):
         # Validation required: please open redirect_uri in browser
         # TODO: cover with tests
+        # TODO: remove dependancy from oauth_tokens
+        from oauth_tokens.models import AccessToken
         self.logger.warning("Request error: %s. Error registered while executing \
             method %s with params %s, recursion count: %d" % (e, self.method, kwargs, self.recursion_count))
 

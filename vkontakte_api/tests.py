@@ -2,6 +2,7 @@
 from django.db import models, IntegrityError
 from django.test import TestCase
 import mock
+from social_api.api import override_api_context
 
 from .api import api_call, VkontakteError, VkontakteApi
 from .decorators import opt_generator
@@ -9,11 +10,13 @@ from .models import VkontakteIDModel, VkontaktePKModel, VkontakteManager
 from .parser import VkontakteParser
 
 
-class User(VkontaktePKModel):
+TOKEN = 'b8b19e5c05cf2a457f50b15840081893d1f417f19489e57ce5ccfc176af73b8f0b449f0b313f53d9dcaba'
 
-    '''
+
+class User(VkontaktePKModel):
+    """
     Test model should be on top level, otherwise table will not be created
-    '''
+    """
     resolve_screen_name_types = ['user']
     screen_name = models.CharField(u'Короткое имя группы', max_length=50, unique=True)
     slug_prefix = 'id'
@@ -29,20 +32,6 @@ class UserID(VkontakteIDModel):
 
 
 class VkontakteApiTest(TestCase):
-
-
-    def test_access_token_of_social_auth_user(self):
-
-        from social.apps.django_app.default.models import UserSocialAuth
-        from django.contrib.auth.models import User
-        user = User.objects.create(username='123', email='asds@fdf.co')
-
-        with self.settings(**{'VKONTAKTE_API_ACCESS_TOKEN': None}):
-            api = VkontakteApi()
-            api.user = user
-            UserSocialAuth.objects.create(user=user, uid=3, provider=api.provider_social_auth,
-                                          extra_data='{"access_token": "111111111111", "expires": null, "id": null}')
-            self.assertEqual(api.get_token(), '111111111111')
 
     def test_api_instance_singleton(self):
 
@@ -105,18 +94,21 @@ class VkontakteApiTest(TestCase):
 
     def test_resolvescreenname(self):
 
-        response = api_call('resolveScreenName', screen_name='durov')
-        self.assertEqual(response, {u'object_id': 1, u'type': u'user'})
+        with override_api_context('vkontakte', token=TOKEN):
+            response = api_call('resolveScreenName', screen_name='durov')
+            self.assertEqual(response, {u'object_id': 1, u'type': u'user'})
 
     def test_get_by_url(self):
 
-        instance = User.remote.get_by_url('https://vk.com/id1/')
-        self.assertEqual(instance.screen_name, 'id1')
+        with override_api_context('vkontakte', token=TOKEN):
+            instance = User.remote.get_by_url('https://vk.com/id1/')
+            self.assertEqual(instance.screen_name, 'id1')
 
     def test_get_by_slug(self):
 
-        instance = User.remote.get_by_slug('durov')
-        self.assertEqual(instance.remote_id, 1)
+        with override_api_context('vkontakte', token=TOKEN):
+            instance = User.remote.get_by_slug('durov')
+            self.assertEqual(instance.remote_id, 1)
 
 #     @mock.patch('time.sleep')
 #     def test_requests_limit_per_sec(self, sleep, *args, **kwargs):

@@ -29,9 +29,9 @@ class VkontakteManager(models.Manager):
     remote_pk = ()
     version = None
 
-    '''
+    """
     Vkontakte Ads API Manager for RESTful CRUD operations
-    '''
+    """
 
     def __init__(self, methods_namespace=None, methods=None, remote_pk=None, version=None, *args, **kwargs):
         if methods and len(methods.items()) < 1:
@@ -52,9 +52,9 @@ class VkontakteManager(models.Manager):
         super(VkontakteManager, self).__init__(*args, **kwargs)
 
     def get_by_url(self, url):
-        '''
+        """
         Return vkonakte object by url
-        '''
+        """
         m = re.findall(r'^(?:https?://)?vk.com/([^/\?]+)', url)
         if not len(m):
             raise ValueError("Url should be started with http://vk.com/")
@@ -62,9 +62,9 @@ class VkontakteManager(models.Manager):
         return self.get_by_slug(m[0])
 
     def get_by_slug(self, slug):
-        '''
+        """
         Return existed User, Group, Application by slug or new intance with empty pk
-        '''
+        """
         try:
             assert self.model.slug_prefix and slug.startswith(self.model.slug_prefix)
             remote_id = int(re.findall(r'^%s(\d+)$' % self.model.slug_prefix, slug)[0])
@@ -166,9 +166,9 @@ class VkontakteManager(models.Manager):
 
     @atomic
     def fetch(self, *args, **kwargs):
-        '''
+        """
         Retrieve and save object to local DB
-        '''
+        """
         result = self.get(*args, **kwargs)
         if isinstance(result, list):
             # python 2.6 compatibility
@@ -182,10 +182,10 @@ class VkontakteManager(models.Manager):
             return self.get_or_create_from_instance(result)
 
     def get(self, *args, **kwargs):
-        '''
+        """
         Retrieve objects from remote server
         TODO: rename everywhere extra_fields to _extra_fields
-        '''
+        """
         extra_fields = kwargs.pop('extra_fields', {})
         extra_fields['fetched'] = timezone.now()
 
@@ -241,9 +241,9 @@ class VkontakteManager(models.Manager):
 
 class VkontakteTimelineManager(VkontakteManager):
 
-    '''
+    """
     Manager class, child of VkontakteManager for fetching objects with arguments `after`, `before`
-    '''
+    """
     timeline_cut_fieldname = 'date'
     timeline_force_ordering = False
 
@@ -252,12 +252,12 @@ class VkontakteTimelineManager(VkontakteManager):
 
     @atomic
     def fetch(self, *args, **kwargs):
-        '''
+        """
         Retrieve and save object to local DB
         Return queryset with respect to parameters:
          * 'after' - excluding all items before.
          * 'before' - excluding all items after.
-        '''
+        """
         after = kwargs.pop('after', None)
         before = kwargs.pop('before', None)
 
@@ -307,10 +307,10 @@ class VkontakteModel(models.Model):
         abstract = True
 
     def _substitute(self, old_instance):
-        '''
+        """
         Substitute new instance with old one while updating in method Manager.get_or_create_from_instance()
         Can be overrided in child models
-        '''
+        """
         self.pk = old_instance.pk
 
     def save(self, *args, **kwargs):
@@ -321,9 +321,9 @@ class VkontakteModel(models.Model):
             raise type(e), type(e)(e.message + ' while saving %s' % self.__dict__), sys.exc_info()[2]
 
     def parse(self, response):
-        '''
+        """
         Parse API response and define fields with values
-        '''
+        """
         for key, value in response.items():
             if key == self.remote_pk_field:
                 key = self.remote_pk_local_field
@@ -429,11 +429,12 @@ class VkontakteIDModel(RemoteIdModelMixin, VkontakteModel):
         abstract = True
 
     def save(self, *args, **kwargs):
-        '''
+        """
         In case of IntegrityError, caused by `remote_id` field make substitution and save again
-        '''
+        """
         try:
-            return super(VkontakteIDModel, self).save(*args, **kwargs)
+            with atomic():
+                return super(VkontakteIDModel, self).save(*args, **kwargs)
         except IntegrityError as e:
             try:
                 assert self.remote_id and 'remote_id' in unicode(e)
@@ -495,9 +496,9 @@ class VkontakteCRUDModel(models.Model):
             self.restore_remote(commit_remote)
 
     def save(self, commit_remote=None, *args, **kwargs):
-        '''
+        """
         Update remote version of object before saving if data is different
-        '''
+        """
         commit_remote = commit_remote if commit_remote is not None else self._commit_remote
         if commit_remote and COMMIT_REMOTE:
             if not self.pk and not self.fetched:
@@ -529,9 +530,9 @@ class VkontakteCRUDModel(models.Model):
                  (self._meta.object_name, self.remote_id, params))
 
     def delete_remote(self, commit_remote=None):
-        '''
+        """
         Delete objects remotely and mark it archived localy
-        '''
+        """
         commit_remote = commit_remote if commit_remote is not None else self._commit_remote
         if commit_remote and self.remote_id:
             params = self.prepare_delete_params()
@@ -549,9 +550,9 @@ class VkontakteCRUDModel(models.Model):
         self.save(commit_remote=False)
 
     def restore_remote(self, commit_remote=None):
-        '''
+        """
         Restore objects remotely and unmark it archived localy
-        '''
+        """
         commit_remote = commit_remote if commit_remote is not None else self._commit_remote
         if commit_remote and self.remote_id:
             params = self.prepare_restore_params()
@@ -574,9 +575,9 @@ class VkontakteCRUDModel(models.Model):
         return old.__dict__ != self.__dict__
 
     def prepare_update_params_distinct(self, **kwargs):
-        '''
+        """
         Return dict with distinct set of fields for update
-        '''
+        """
         old = self.__class__.objects.get(remote_id=self.remote_id)
         fields_new = self.prepare_update_params(**kwargs).items()
         fields_old = old.prepare_update_params(**kwargs).items()
