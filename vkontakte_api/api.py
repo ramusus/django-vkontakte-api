@@ -24,11 +24,8 @@ class VkontakteApi(ApiAbstractBase):
         return self.api.get(self.method, timeout=self.request_timeout, *args, **kwargs)
 
     def handle_error_code_5(self, e, *args, **kwargs):
-        if self.user:
-            raise e
-        self.logger.info("Updating vkontakte access token, error %s, method: %s, recursion count: %d" %
-                         (e, self.method, self.recursion_count))
-        self.update_tokens()
+        # code = 5, description = 'User authorization failed: invalid session.'
+        self.used_access_tokens += [self.api.token]
         return self.repeat_call(*args, **kwargs)
 
     def handle_error_code_6(self, e, *args, **kwargs):
@@ -50,29 +47,31 @@ class VkontakteApi(ApiAbstractBase):
         return self.sleep_repeat_call(*args, **kwargs)
 
     def handle_error_code_17(self, e, *args, **kwargs):
-        # Validation required: please open redirect_uri in browser
-        # TODO: cover with tests
-        # TODO: remove dependancy from oauth_tokens
-        from oauth_tokens.models import AccessToken
-        self.logger.warning("Request error: %s. Error registered while executing \
-            method %s with params %s, recursion count: %d" % (e, self.method, kwargs, self.recursion_count))
-
-        user = AccessToken.objects.get(access_token=self.api.token).user_credentials
-        auth_request = AccessToken.objects.get_token_for_user('vkontakte', user).auth_request
-        auth_request.form_action_domain = 'https://m.vk.com'
-
-        response = auth_request.session.get(e.redirect_uri)
-        try:
-            method, action, data = auth_request.get_form_data_from_content(response.content)
-        except:
-            raise Exception("There is no any form in response: %s" % response.content)
-        data = {'code': auth_request.additional}
-        response = getattr(auth_request.session, method)(url=action, headers=auth_request.headers, data=data)
-
-        if 'success' not in response.url:
-            raise Exception("Wrong response. Can not handle VK error 17. response: %s" % response.content)
-
-        return self.sleep_repeat_call(*args, **kwargs)
+        # code = 17, description = 'Validation required: please open redirect_uri in browser'
+        self.used_access_tokens += [self.api.token]
+        return self.repeat_call(*args, **kwargs)
+        # # TODO: cover with tests
+        # # TODO: remove dependancy from oauth_tokens
+        # from oauth_tokens.models import AccessToken
+        # self.logger.warning("Request error: %s. Error registered while executing \
+        #     method %s with params %s, recursion count: %d" % (e, self.method, kwargs, self.recursion_count))
+        #
+        # user = AccessToken.objects.get(access_token=self.api.token).user_credentials
+        # auth_request = AccessToken.objects.get_token_for_user('vkontakte', user).auth_request
+        # auth_request.form_action_domain = 'https://m.vk.com'
+        #
+        # response = auth_request.session.get(e.redirect_uri)
+        # try:
+        #     method, action, data = auth_request.get_form_data_from_content(response.content)
+        # except:
+        #     raise Exception("There is no any form in response: %s" % response.content)
+        # data = {'code': auth_request.additional}
+        # response = getattr(auth_request.session, method)(url=action, headers=auth_request.headers, data=data)
+        #
+        # if 'success' not in response.url:
+        #     raise Exception("Wrong response. Can not handle VK error 17. response: %s" % response.content)
+        #
+        # return self.sleep_repeat_call(*args, **kwargs)
 
     def handle_error_code_500(self, e, *args, **kwargs):
         # strange HTTP error appears sometimes
