@@ -388,7 +388,7 @@ class VkontakteModel(models.Model):
 
             if isinstance(field, fields.JSONField):
                 try:
-                    field.validate(value)
+                    field.validate(value, self)
                 except ValidationError:
                     log.warning("Can not validate json field %s with value %s in the model %s" % (
                         key, value, self.__class__.__name__))

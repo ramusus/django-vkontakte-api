@@ -6,6 +6,9 @@ from picklefield.fields import PickledObjectField
 import re
 
 
+__all__ = ['PickledObjectField', 'CharRangeLengthField', 'CommaSeparatedCharField', 'IntegerRangeField', 'JSONField']
+
+
 class CharRangeLengthField(models.CharField):
     """
     Char field with max_length and min_length properties
