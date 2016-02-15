@@ -2,6 +2,7 @@
 from django.db import models
 from django.core import validators
 from django.utils.translation import ugettext_lazy as _
+from picklefield.fields import PickledObjectField
 import re
 
 
@@ -126,6 +127,6 @@ class JSONField(models.TextField):
 
 try:
     from south.modelsinspector import add_introspection_rules
-    add_introspection_rules([], ["^social_auth\.fields\.JSONField"])
+    add_introspection_rules([], ["^vkontakte_api\.fields\.JSONField"])
 except:
     pass

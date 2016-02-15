@@ -405,7 +405,8 @@ class VkontakteModel(models.Model):
             self.__dict__.update(objects[0].__dict__)
         else:
             raise VkontakteContentError(
-                "Remote server returned more objects, than expected - %d instead of one. Object details: %s, request details: %s" % (len(objects), self.__dict__, kwargs))
+                "Remote server returned more objects, than expected - %d instead of one. Object details: %s, "
+                "request details: %s" % (len(objects), self.__dict__, self.refresh_kwargs))
 
     def get_url(self):
         return 'http://vk.com/%s' % self.slug
