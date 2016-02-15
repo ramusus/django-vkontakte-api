@@ -25,6 +25,7 @@ class VkontakteApi(ApiAbstractBase):
 
     def handle_error_code_5(self, e, *args, **kwargs):
         # code = 5, description = 'User authorization failed: invalid session.'
+        # code = 5, description = 'User authorization failed: user revoke access for this token.'
         self.used_access_tokens += [self.api.token]
         return self.repeat_call(*args, **kwargs)
 
