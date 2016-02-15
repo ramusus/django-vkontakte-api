@@ -2,15 +2,14 @@
 from django.db import models
 from django.core import validators
 from django.utils.translation import ugettext_lazy as _
-from annoying.fields import JSONField
-from picklefield.fields import PickledObjectField
 import re
 
+
 class CharRangeLengthField(models.CharField):
-    '''
+    """
     Char field with max_length and min_length properties
-    based on field from here http://stackoverflow.com/questions/849142/how-to-limit-the-maximum-value-of-a-numeric-field-in-a-django-model
-    '''
+    based on field from here http://stackoverflow.com/questions/849142/how-to-limit-the-maximum-value-of-a-numeric-field-in-a-django-model  # noqa
+    """
     def __init__(self, *args, **kwargs):
         self.min_length = kwargs.pop('min_length') if 'min_length' in kwargs else None
         self.max_length = kwargs.get('max_length', None)
@@ -22,13 +21,15 @@ class CharRangeLengthField(models.CharField):
         return super(CharRangeLengthField, self).formfield(**defaults)
 
 comma_separated_string_list_re = re.compile(u'^(?u)[\w, ]+$')
-validate_comma_separated_string_list = validators.RegexValidator(comma_separated_string_list_re, _(u'Enter values separated by commas.'), 'invalid')
+validate_comma_separated_string_list = validators.RegexValidator(comma_separated_string_list_re,
+                                                                 _(u'Enter values separated by commas.'), 'invalid')
+
 
 class CommaSeparatedCharField(models.CharField):
-    '''
+    """
     Field for comma-separated strings
     TODO: added max_number validator
-    '''
+    """
     default_validators = [validate_comma_separated_string_list]
     description = _("Comma-separated strings")
 
@@ -40,6 +41,7 @@ class CommaSeparatedCharField(models.CharField):
         }
         defaults.update(kwargs)
         return super(CommaSeparatedCharField, self).formfield(**defaults)
+
 
 class IntegerRangeField(models.IntegerField):
 

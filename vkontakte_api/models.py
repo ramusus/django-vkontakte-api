@@ -6,6 +6,7 @@ import re
 
 from django.conf import settings
 from django.db import models, IntegrityError
+from django.core.exceptions import ValidationError
 from django.db.models.fields import FieldDoesNotExist
 from django.db.models.query import QuerySet
 from django.utils import timezone
@@ -384,6 +385,14 @@ class VkontakteModel(models.Model):
 
             if isinstance(field, (fields.CommaSeparatedCharField, models.CommaSeparatedIntegerField)) and isinstance(value, list):
                 value = ','.join([unicode(v) for v in value])
+
+            if isinstance(field, fields.JSONField):
+                try:
+                    field.validate(value)
+                except ValidationError:
+                    log.warning("Can not validate json field %s with value %s in the model %s" % (
+                        key, value, self.__class__.__name__))
+                    value = ''
 
             setattr(self, key, value)
 
