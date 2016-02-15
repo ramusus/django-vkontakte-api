@@ -4,13 +4,13 @@ from django.test import TestCase
 import mock
 from social_api.api import override_api_context
 
-from .api import api_call, VkontakteError, VkontakteApi
+from .api import api_call, VkontakteApi
 from .decorators import opt_generator
 from .models import VkontakteIDModel, VkontaktePKModel, VkontakteManager
 from .parser import VkontakteParser
 
 
-TOKEN = 'b8b19e5c05cf2a457f50b15840081893d1f417f19489e57ce5ccfc176af73b8f0b449f0b313f53d9dcaba'
+TOKEN = '33af136bd445c28075f429fdb2fb9387db8fdd2d2d118c1653a4d6507f76460fce35a08b94e745eac1807'
 
 
 class User(VkontaktePKModel):
