@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 from django.db import models, IntegrityError
 from django.test import TestCase
+from django.conf import settings
 import mock
-from social_api.api import override_api_context
 
 from .api import api_call, VkontakteApi
 from .decorators import opt_generator
@@ -31,7 +31,20 @@ class UserID(VkontakteIDModel):
     screen_name = models.CharField(u'Короткое имя группы', max_length=50, unique=True)
 
 
-class VkontakteApiTest(TestCase):
+class VkontakteApiTestCase(TestCase):
+
+    settings = None
+
+    def setUp(self):
+        context = getattr(settings, 'SOCIAL_API_CALL_CONTEXT', {})
+        self.settings = dict(context)
+        context.update({'vkontakte': {'token': TOKEN}})
+
+    def tearDown(self):
+        setattr(settings, 'SOCIAL_API_CALL_CONTEXT', self.settings)
+
+
+class VkontakteApiTest(VkontakteApiTestCase):
 
     def test_api_instance_singleton(self):
 
@@ -93,22 +106,16 @@ class VkontakteApiTest(TestCase):
         self.assertEqual(parser.html, '<div>1234</div>')
 
     def test_resolvescreenname(self):
-
-        with override_api_context('vkontakte', token=TOKEN):
-            response = api_call('resolveScreenName', screen_name='durov')
-            self.assertEqual(response, {u'object_id': 1, u'type': u'user'})
+        response = api_call('resolveScreenName', screen_name='durov')
+        self.assertEqual(response, {u'object_id': 1, u'type': u'user'})
 
     def test_get_by_url(self):
-
-        with override_api_context('vkontakte', token=TOKEN):
-            instance = User.remote.get_by_url('https://vk.com/id1/')
-            self.assertEqual(instance.screen_name, 'id1')
+        instance = User.remote.get_by_url('https://vk.com/id1/')
+        self.assertEqual(instance.screen_name, 'id1')
 
     def test_get_by_slug(self):
-
-        with override_api_context('vkontakte', token=TOKEN):
-            instance = User.remote.get_by_slug('durov')
-            self.assertEqual(instance.remote_id, 1)
+        instance = User.remote.get_by_slug('durov')
+        self.assertEqual(instance.remote_id, 1)
 
 #     @mock.patch('time.sleep')
 #     def test_requests_limit_per_sec(self, sleep, *args, **kwargs):
