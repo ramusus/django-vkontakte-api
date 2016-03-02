@@ -25,14 +25,13 @@ MASTER_DATABASE = getattr(settings, 'VKONTAKTE_API_MASTER_DATABASE', 'default')
 
 
 class VkontakteManager(models.Manager):
+    """
+    Vkontakte Ads API Manager for RESTful CRUD operations
+    """
     methods_namespace = None
     methods = {}
     remote_pk = ()
     version = None
-
-    """
-    Vkontakte Ads API Manager for RESTful CRUD operations
-    """
 
     def __init__(self, methods_namespace=None, methods=None, remote_pk=None, version=None, *args, **kwargs):
         if methods and len(methods.items()) < 1:
@@ -158,11 +157,6 @@ class VkontakteManager(models.Manager):
             method = methods_namespace + '.' + method
 
         response = api_call(method, **kwargs)
-
-        if version >= 4.93:
-            if isinstance(response, dict) and 'items' in response:
-                response = response['items']
-
         return response
 
     @atomic
@@ -192,6 +186,10 @@ class VkontakteManager(models.Manager):
         return self.parse_response(response, extra_fields)
 
     def parse_response(self, response, extra_fields=None):
+
+        if self.version >= 4.93 and isinstance(response, dict) and 'items' in response:
+            response = response['items']
+
         if isinstance(response, (list, tuple)):
             return self.parse_response_list(response, extra_fields)
         elif isinstance(response, dict):
@@ -201,7 +199,6 @@ class VkontakteManager(models.Manager):
 
     # TODO: rename to parse_response_object
     def parse_response_dict(self, resource, extra_fields=None):
-
         instance = self.model()
         # important to do it before calling parse method
         if extra_fields:
