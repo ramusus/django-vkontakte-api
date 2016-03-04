@@ -116,7 +116,7 @@ class VkontakteParser(object):
         try:
             value = container.find('span', {'class': classname}).text
             return value and int(value) or 0
-        except Exception, e:
+        except Exception as e:
             raise VkontakteParseError("Error while parsing post likes value: %s" % e)
 
     def add_users(self, users, user_link, user_photo, user_add):

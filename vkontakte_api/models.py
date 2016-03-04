@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import sys
 from abc import abstractmethod
 from datetime import datetime, date
 import logging
@@ -9,7 +10,7 @@ from django.db import models, IntegrityError
 from django.core.exceptions import ValidationError
 from django.db.models.fields import FieldDoesNotExist
 from django.db.models.query import QuerySet
-from django.utils import timezone
+from django.utils import timezone, six
 
 from . import fields
 from .api import api_call, VkontakteError
@@ -312,8 +313,7 @@ class VkontakteModel(models.Model):
         try:
             return super(VkontakteModel, self).save(*args, **kwargs)
         except Exception as e:
-            import sys
-            raise type(e)(e.message + ' while saving %s' % self.__dict__).with_traceback(sys.exc_info()[2])
+            six.reraise(type(e), e.message + ' while saving %s' % self.__dict__, sys.exc_info()[2])
 
     def parse(self, response):
         """
@@ -447,7 +447,7 @@ class VkontakteIDModel(RemoteIdModelMixin, VkontakteModel):
                 kwargs['force_insert'] = False
                 return super(VkontakteIDModel, self).save(*args, **kwargs)
             except (AssertionError, self.__class__.DoesNotExist):
-                raise
+                raise e
 
 
 class VkontakteIDStrModel(RemoteIdModelMixin, VkontakteModel):
