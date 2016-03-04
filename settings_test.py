@@ -1,5 +1,4 @@
 INSTALLED_APPS = (
-    'oauth_tokens',
     'taggit',
 )
 

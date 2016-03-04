@@ -52,7 +52,6 @@ class VkontakteApi(ApiAbstractBase):
         self.used_access_tokens += [self.api.token]
         return self.repeat_call(*args, **kwargs)
         # # TODO: cover with tests
-        # # TODO: remove dependancy from oauth_tokens
         # from oauth_tokens.models import AccessToken
         # self.logger.warning("Request error: %s. Error registered while executing \
         #     method %s with params %s, recursion count: %d" % (e, self.method, kwargs, self.recursion_count))

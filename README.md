@@ -14,7 +14,6 @@ Add into `settings.py` lines:
 
     INSTALLED_APPS = (
         ...
-        'oauth_tokens',
         'taggit',
         'vkontakte_api',
     )

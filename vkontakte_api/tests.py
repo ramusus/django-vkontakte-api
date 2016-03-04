@@ -33,15 +33,15 @@ class UserID(VkontakteIDModel):
 
 class VkontakteApiTestCase(TestCase):
 
-    settings = None
+    _settings = None
 
     def setUp(self):
         context = getattr(settings, 'SOCIAL_API_CALL_CONTEXT', {})
-        self.settings = dict(context)
+        self._settings = dict(context)
         context.update({'vkontakte': {'token': TOKEN}})
 
     def tearDown(self):
-        setattr(settings, 'SOCIAL_API_CALL_CONTEXT', self.settings)
+        setattr(settings, 'SOCIAL_API_CALL_CONTEXT', self._settings)
 
 
 class VkontakteApiTest(VkontakteApiTestCase):
