@@ -71,7 +71,7 @@ class VkontakteManager(models.Manager):
         except (AssertionError, ValueError, IndexError):
             try:
                 response = api_call('resolveScreenName', **{'screen_name': slug})
-            except VkontakteError, e:
+            except VkontakteError as e:
                 log.error("Method get_by_slug returned error instead of response. Slug: '%s'. Error: %s" % (slug, e))
                 return None
 
@@ -81,7 +81,7 @@ class VkontakteManager(models.Manager):
 
             try:
                 remote_id = int(response['object_id'])
-            except (KeyError, TypeError, ValueError), e:
+            except (KeyError, TypeError, ValueError) as e:
                 # TODO: raise error
                 log.error("Method get_by_slug returned response in strange format: %s. Slug is '%s'" %
                           (response, slug))
@@ -224,7 +224,7 @@ class VkontakteManager(models.Manager):
 
             try:
                 resource = dict(resource)
-            except (TypeError, ValueError), e:
+            except (TypeError, ValueError) as e:
                 log.error("Resource %s is not dictionary" % resource)
                 raise e
 
