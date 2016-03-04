@@ -313,7 +313,7 @@ class VkontakteModel(models.Model):
             return super(VkontakteModel, self).save(*args, **kwargs)
         except Exception as e:
             import sys
-            raise type(e), type(e)(e.message + ' while saving %s' % self.__dict__), sys.exc_info()[2]
+            raise type(e)(e.message + ' while saving %s' % self.__dict__).with_traceback(sys.exc_info()[2])
 
     def parse(self, response):
         """
@@ -447,7 +447,7 @@ class VkontakteIDModel(RemoteIdModelMixin, VkontakteModel):
                 kwargs['force_insert'] = False
                 return super(VkontakteIDModel, self).save(*args, **kwargs)
             except (AssertionError, self.__class__.DoesNotExist):
-                raise e
+                raise
 
 
 class VkontakteIDStrModel(RemoteIdModelMixin, VkontakteModel):
@@ -598,7 +598,7 @@ class VkontakteCRUDModel(models.Model):
 
         return {param_key: val, ....}
         """
-        raise NotImplementedError
+        raise NotImplementedError()
 
     @abstractmethod
     def prepare_update_params(self, **kwargs):
@@ -609,7 +609,7 @@ class VkontakteCRUDModel(models.Model):
 
         return {param_key: val, ....}
         """
-        raise NotImplementedError
+        raise NotImplementedError()
 
     @abstractmethod
     def prepare_delete_params(self):
@@ -618,7 +618,7 @@ class VkontakteCRUDModel(models.Model):
 
         return {param_key: val, ....}
         """
-        raise NotImplementedError
+        raise NotImplementedError()
 
     @abstractmethod
     def prepare_restore_params(self):
@@ -638,7 +638,7 @@ class VkontakteCRUDModel(models.Model):
 
         return 'some_id'
         """
-        raise NotImplementedError
+        raise NotImplementedError()
 
     def check_remote_existance(self, *args, **kwargs):
         self.refresh(*args, **kwargs)
