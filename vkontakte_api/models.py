@@ -313,7 +313,7 @@ class VkontakteModel(models.Model):
         try:
             return super(VkontakteModel, self).save(*args, **kwargs)
         except Exception as e:
-            six.reraise(type(e), e.message + ' while saving %s' % self.__dict__, sys.exc_info()[2])
+            six.reraise(type(e), str(e) + ' while saving %s' % self.__dict__, sys.exc_info()[2])
 
     def parse(self, response):
         """
