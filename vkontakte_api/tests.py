@@ -11,6 +11,7 @@ from .parser import VkontakteParser
 
 
 TOKEN = '33af136bd445c28075f429fdb2fb9387db8fdd2d2d118c1653a4d6507f76460fce35a08b94e745eac1807'
+TOKEN_USER_ID = 201164356
 
 
 class User(VkontaktePKModel):
@@ -34,11 +35,13 @@ class UserID(VkontakteIDModel):
 class VkontakteApiTestCase(TestCase):
 
     _settings = None
+    token = TOKEN
+    token_user_id = TOKEN_USER_ID
 
     def setUp(self):
         context = getattr(settings, 'SOCIAL_API_CALL_CONTEXT', {})
         self._settings = dict(context)
-        context.update({'vkontakte': {'token': TOKEN}})
+        context.update({'vkontakte': {'token': self.token}})
 
     def tearDown(self):
         setattr(settings, 'SOCIAL_API_CALL_CONTEXT', self._settings)
