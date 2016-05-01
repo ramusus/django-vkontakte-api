@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 from django.db import models, IntegrityError
-from django.test import TestCase
-from django.conf import settings
+from social_api.testcase import SocialApiTestCase
 import mock
 
 from .api import api_call, VkontakteApi
@@ -32,19 +31,10 @@ class UserID(VkontakteIDModel):
     screen_name = models.CharField(u'Короткое имя группы', max_length=50, unique=True)
 
 
-class VkontakteApiTestCase(TestCase):
-
-    _settings = None
+class VkontakteApiTestCase(SocialApiTestCase):
+    provider = 'vkontakte'
     token = TOKEN
     token_user_id = TOKEN_USER_ID
-
-    def setUp(self):
-        context = getattr(settings, 'SOCIAL_API_CALL_CONTEXT', {})
-        self._settings = dict(context)
-        context.update({'vkontakte': {'token': self.token}})
-
-    def tearDown(self):
-        setattr(settings, 'SOCIAL_API_CALL_CONTEXT', self._settings)
 
 
 class VkontakteApiTest(VkontakteApiTestCase):
