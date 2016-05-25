@@ -56,7 +56,7 @@ class VkontakteManager(models.Manager):
         """
         Return vkonakte object by url
         """
-        m = re.findall(r'^(?:https?://)?vk.com/([^/\?]+)', url)
+        m = re.findall(r'^(?:https?://)?(?:new\.)?vk.com/([^/\?]+)', url)
         if not len(m):
             raise ValueError("Url should be started with http://vk.com/")
 
